@@ -14,6 +14,7 @@ from .models import (
 from .normalize import canonical_key, normalize_accession, normalize_gene_symbol, normalize_label, normalize_species
 from .registry import AtlasRegistry
 from .service import AtlasService
+from .snapshot import SnapshotManifest, create_snapshot
 from .sqlite import SQLiteAtlasStore
 
 __all__ = [
@@ -31,8 +32,10 @@ __all__ = [
     "MarkerRecord",
     "PhenotypeRecord",
     "Relation",
+    "SnapshotManifest",
     "SQLiteAtlasStore",
     "canonical_key",
+    "create_snapshot",
     "normalize_accession",
     "normalize_gene_symbol",
     "normalize_label",
