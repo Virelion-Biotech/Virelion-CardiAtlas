@@ -1,0 +1,11 @@
+{"subject":"marker:tnnt2","predicate":"marks","object":"cell:cardiomyocyte","source":"cardiatlas:curated-core","confidence":0.99}
+{"subject":"marker:actn2","predicate":"marks","object":"cell:cardiomyocyte","source":"cardiatlas:curated-core","confidence":0.99}
+{"subject":"marker:cmlc1","predicate":"marks","object":"cell:cardiomyocyte","source":"cardiatlas:curated-core","confidence":0.99}
+{"subject":"marker:col1a1","predicate":"associated_with","object":"cell:fibroblast","source":"cardiatlas:curated-core","confidence":0.97}
+{"subject":"marker:postn","predicate":"associated_with","object":"state:activated_fibroblast","source":"cardiatlas:curated-core","confidence":0.96}
+{"subject":"marker:pecam1","predicate":"marks","object":"cell:endothelial","source":"cardiatlas:curated-core","confidence":0.99}
+{"subject":"marker:emcn","predicate":"marks","object":"cell:endothelial","source":"cardiatlas:curated-core","confidence":0.97}
+{"subject":"marker:scn5a","predicate":"associated_with","object":"process:electrophysiology","source":"cardiatlas:curated-core","confidence":0.95}
+{"subject":"marker:kcnj2","predicate":"associated_with","object":"process:electrophysiology","source":"cardiatlas:curated-core","confidence":0.95}
+{"subject":"phenotype:myocardial_infarction","predicate":"involves","object":"process:remodeling","source":"cardiatlas:curated-core","confidence":0.95}
+{"subject":"phenotype:fibrosis","predicate":"associated_with","object":"state:activated_fibroblast","source":"cardiatlas:curated-core","confidence":0.95}
