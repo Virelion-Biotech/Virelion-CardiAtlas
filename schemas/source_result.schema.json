@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CardiAtlas Source Result",
+  "type": "object",
+  "required": ["source_name", "query", "records"],
+  "properties": {
+    "source_name": {"type": "string", "minLength": 1},
+    "query": {"type": "string"},
+    "records": {"type": "array", "items": {"type": "object"}},
+    "retrieved_at": {"type": "string"},
+    "source_version": {"type": ["string", "null"]},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": true
+}
