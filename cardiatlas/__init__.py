@@ -1,6 +1,7 @@
 """Virelion CardiAtlas: structured cardiac biomedical knowledge."""
 
 from .api import AtlasAPI
+from .build import ReferenceBuild, build_reference, populate_registry
 from .catalog import CatalogGroup, attach_datasets, group_datasets
 from .claims import Claim, ClaimAssessment, ClaimStore
 from .contracts import AtlasContext, context_from_dict
@@ -12,6 +13,7 @@ from .harmonize import HarmonizedValue, harmonize_condition, harmonize_label, ha
 from .identifiers import IdentifierResolution, resolve as resolve_identifier
 from .integrations import BenchmarkCandidate, benchmark_readiness, dataset_to_benchmark_candidate
 from .loader import load_into_registry, read_bundle, record_from_dict
+from .migrate import migrate_payload, migrate_records
 from .models import AtlasRecord, CellStateRecord, DatasetRecord, EvidenceRecord, InterventionRecord, MarkerRecord, PhenotypeRecord, SampleRecord, StudyRecord
 from .normalize import canonical_key, normalize_accession, normalize_gene_symbol, normalize_label, normalize_species
 from .ontology import Concept, canonical_concept_id, concepts_by_category, descendants, resolve_concept
@@ -23,23 +25,24 @@ from .release import ReleaseManifest, create_manifest, digest_records, verify_di
 from .release_checks import ReleaseCheck, ReleaseReadiness, assess_release
 from .sample_ingest import ingest_sample_rows, sample_from_metadata
 from .service import AtlasService
+from .sources import SourceResult, ingest_source
 from .sqlite import SQLiteAtlasStore
 from .studies import StudyQC, assess_study, study_from_datasets
 
 __all__ = [
-    "AtlasAPI", "AtlasContext", "AtlasGraph", "AtlasRecord", "AtlasRegistry", "AtlasService",
-    "BenchmarkCandidate", "CatalogGroup", "CellStateRecord", "Claim", "ClaimAssessment", "ClaimStore",
-    "Concept", "DatasetRecord", "EvidenceRecord", "EvidenceScore", "HarmonizedValue", "IdentifierResolution",
-    "InterventionRecord", "MarkerRecord", "PhenotypeRecord", "ProvenanceBundle", "ProvenanceEvent",
-    "Query", "QueryHit", "QualityReport", "Relation", "ReleaseCheck", "ReleaseManifest", "ReleaseReadiness",
-    "SampleRecord", "SnapshotDiff", "SQLiteAtlasStore", "StudyQC", "StudyRecord",
-    "assess_dataset", "assess_release", "assess_study", "attach_datasets", "audit_datasets", "benchmark_readiness",
-    "canonical_concept_id", "canonical_key", "concepts_by_category", "context_from_dict", "create_manifest",
-    "dataset_to_benchmark_candidate", "descendants", "diff_records", "digest_records", "group_datasets",
-    "harmonize_condition", "harmonize_label", "harmonize_modality", "ingest_sample_rows", "load_into_registry",
-    "normalize_accession", "normalize_gene_symbol", "normalize_label", "normalize_species", "query_registry",
-    "read_bundle", "record_from_dict", "resolve_concept", "resolve_identifier", "sample_from_metadata",
-    "score_evidence", "study_from_datasets", "verify_digest", "write_cardiBench_candidates", "write_records", "write_release",
+    "AtlasAPI", "AtlasContext", "AtlasGraph", "AtlasRecord", "AtlasRegistry", "AtlasService", "BenchmarkCandidate",
+    "CatalogGroup", "CellStateRecord", "Claim", "ClaimAssessment", "ClaimStore", "Concept", "DatasetRecord",
+    "EvidenceRecord", "EvidenceScore", "HarmonizedValue", "IdentifierResolution", "InterventionRecord", "MarkerRecord",
+    "PhenotypeRecord", "ProvenanceBundle", "ProvenanceEvent", "Query", "QueryHit", "QualityReport", "Relation",
+    "ReferenceBuild", "ReleaseCheck", "ReleaseManifest", "ReleaseReadiness", "SampleRecord", "SnapshotDiff",
+    "SourceResult", "SQLiteAtlasStore", "StudyQC", "StudyRecord", "assess_dataset", "assess_release", "assess_study",
+    "attach_datasets", "audit_datasets", "benchmark_readiness", "build_reference", "canonical_concept_id", "canonical_key",
+    "concepts_by_category", "context_from_dict", "create_manifest", "dataset_to_benchmark_candidate", "descendants", "diff_records",
+    "digest_records", "group_datasets", "harmonize_condition", "harmonize_label", "harmonize_modality", "ingest_sample_rows",
+    "ingest_source", "load_into_registry", "migrate_payload", "migrate_records", "normalize_accession", "normalize_gene_symbol",
+    "normalize_label", "normalize_species", "populate_registry", "query_registry", "read_bundle", "record_from_dict",
+    "resolve_concept", "resolve_identifier", "sample_from_metadata", "score_evidence", "study_from_datasets", "verify_digest",
+    "write_cardiBench_candidates", "write_records", "write_release",
 ]
 
 __version__ = "0.4.0"
