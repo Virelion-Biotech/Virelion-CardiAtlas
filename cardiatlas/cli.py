@@ -35,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     harvest.add_argument("--domain", default=None)
     harvest.add_argument("--limit", type=int, default=20)
     harvest.add_argument("--plan-only", action="store_true")
-    harvest.add_argument("--output", default=None, help="directory for deduplicated harvest items and manifest")
+    harvest.add_argument("--output", default=None, help="directory for deduplicated harvest items, normalized records, and manifest")
     resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
     resolve.add_argument("term")
     identifier = sub.add_parser("identifier", help="resolve a gene symbol, accession, or PMID")
@@ -92,12 +92,13 @@ def main(argv: list[str] | None = None) -> int:
         client = NcbiClient()
         batches = harvest_plan(client, targets, limit=args.limit)
         items = [item for batch in batches for item in batch.items]
+        records = [record for batch in batches for record in batch.records]
         manifest = create_harvest_manifest(items, version="1.0")
         if args.output:
-            manifest = write_harvest(items, args.output, version="1.0", created_at=manifest.created_at)
+            manifest = write_harvest(items, args.output, version="1.0", created_at=manifest.created_at, records=records)
         payload = {
             "target_count": len(batches),
-            "record_count": sum(len(batch.records) for batch in batches),
+            "record_count": len(records),
             "item_count": len(items),
             "manifest": manifest.to_dict(),
             "output": args.output,
