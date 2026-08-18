@@ -5,54 +5,41 @@ import json
 import sys
 
 from .adapters import geo_summary_to_dataset, pubmed_summary_to_evidence
+from .build import build_reference
 from .identifiers import resolve as resolve_identifier
 from .models import EvidenceRecord
 from .ncbi import NcbiClient
 from .ontology import concepts_by_category, resolve_concept
-from .qc import audit_datasets
 from .release_checks import assess_release
-from .sample_ingest import ingest_sample_rows
 from .service import AtlasService
-from .studies import assess_study
 
 
 def _concept_payload(concept):
-    return {
-        "id": concept.id,
-        "label": concept.label,
-        "category": concept.category,
-        "synonyms": list(concept.synonyms),
-        "parent_id": concept.parent_id,
-    }
+    return {"id": concept.id, "label": concept.label, "category": concept.category, "synonyms": list(concept.synonyms), "parent_id": concept.parent_id}
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="cardiatlas", description="Query and populate the Virelion cardiac knowledge layer.")
     sub = parser.add_subparsers(dest="command", required=True)
-
     search = sub.add_parser("pubmed", help="search PubMed and emit normalized evidence records")
     search.add_argument("term")
     search.add_argument("--limit", type=int, default=20)
-
     geo = sub.add_parser("geo", help="search GEO through NCBI and emit normalized dataset records")
     geo.add_argument("term")
     geo.add_argument("--limit", type=int, default=20)
-
     resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
     resolve.add_argument("term")
-
     identifier = sub.add_parser("identifier", help="resolve a gene symbol, accession, or PMID")
     identifier.add_argument("value")
     identifier.add_argument("--type", dest="identifier_type", default=None)
-
     ontology = sub.add_parser("ontology", help="list controlled cardiac concepts")
     ontology.add_argument("--category", default=None)
-
-    release = sub.add_parser("release-check", help="run release integrity checks on in-memory records")
-
+    release = sub.add_parser("release-check", help="run release integrity checks on the current empty/in-memory service")
+    build = sub.add_parser("build-reference", help="build the checked-in reference Atlas and emit a manifest")
+    build.add_argument("--root", default=".")
+    build.add_argument("--version", default="0.4.0")
     explain = sub.add_parser("explain", help="show a JSON record payload from an in-memory service")
     explain.add_argument("record_id")
-
     return parser
 
 
@@ -70,14 +57,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "identifier":
         resolution = resolve_identifier(args.value, args.identifier_type)
-        print(json.dumps({
-            "query": resolution.query,
-            "canonical_id": resolution.canonical_id,
-            "identifier_type": resolution.identifier_type,
-            "confidence": resolution.confidence,
-            "matched_alias": resolution.matched_alias,
-            "source": resolution.source,
-        }, indent=2, sort_keys=True))
+        print(json.dumps({"query": resolution.query, "canonical_id": resolution.canonical_id, "identifier_type": resolution.identifier_type, "confidence": resolution.confidence, "matched_alias": resolution.matched_alias, "source": resolution.source}, indent=2, sort_keys=True))
         return 0 if resolution.canonical_id else 1
 
     if args.command == "ontology":
@@ -89,6 +69,11 @@ def main(argv: list[str] | None = None) -> int:
         result = assess_release(service.registry.all())
         print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
         return 0 if result.passed else 1
+
+    if args.command == "build-reference":
+        result = build_reference(args.root, args.version)
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return 0 if result.readiness.passed else 1
 
     client = NcbiClient()
     if args.command == "pubmed":
