@@ -11,6 +11,7 @@ from .adapters import geo_summary_to_dataset, pubmed_summary_to_evidence
 from .build import build_reference
 from .corpus import corpus_report
 from .corpus_promote import promote_harvest
+from .geo_harvest import reconstruct_geo_accession, write_geo_bundle
 from .harvest_manifest import create_harvest_manifest
 from .harvest_store import write_harvest
 from .harvester import harvest_plan
@@ -72,6 +73,9 @@ def build_parser() -> argparse.ArgumentParser:
     reconstruct.add_argument("dataset", help="JSON file containing one DatasetRecord")
     reconstruct.add_argument("metadata", help="sample metadata as CSV, JSON, or JSONL")
     reconstruct.add_argument("--output", required=True, help="output directory for study, samples, and reconstruction report")
+    live = sub.add_parser("reconstruct-geo", help="fetch GEO family SOFT metadata and reconstruct a live GSE accession")
+    live.add_argument("accession")
+    live.add_argument("--output", required=True, help="output directory for dataset, study, samples, and report")
     corpus = sub.add_parser("corpus", help="report the current in-memory corpus")
     resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
     resolve.add_argument("term")
@@ -147,6 +151,13 @@ def main(argv: list[str] | None = None) -> int:
         (target / "report.json").write_text(json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
         print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
         return 0
+
+    if args.command == "reconstruct-geo":
+        client = NcbiClient()
+        bundle = reconstruct_geo_accession(client, args.accession)
+        write_geo_bundle(bundle, args.output)
+        print(json.dumps(bundle.to_dict(), indent=2, sort_keys=True))
+        return 0 if not bundle.report.warnings else 0
 
     if args.command == "harvest":
         targets = acquisition_plan(args.domain)
