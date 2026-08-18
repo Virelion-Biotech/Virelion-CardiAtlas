@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/dataset_record.schema.json",
+  "title": "CardiAtlas Dataset Record",
+  "type": "object",
+  "required": ["id", "record_type", "name", "accession", "repository", "organism", "modalities"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "record_type": {"const": "dataset"},
+    "name": {"type": "string", "minLength": 1},
+    "accession": {"type": "string"},
+    "repository": {"enum": ["GEO", "SRA", "ArrayExpress", "dbGaP", "other"]},
+    "study_title": {"type": "string"},
+    "organism": {"type": "string"},
+    "tissue": {"type": "string"},
+    "modalities": {"type": "array", "items": {"type": "string"}},
+    "cell_or_nucleus": {"enum": ["cell", "nucleus", "bulk", "mixed", "unknown"]},
+    "conditions": {"type": "array", "items": {"type": "string"}},
+    "sample_count": {"type": ["integer", "null"], "minimum": 0},
+    "cell_count": {"type": ["integer", "null"], "minimum": 0},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}}
+  }
+}
