@@ -6,6 +6,7 @@ from typing import Any, Literal
 EvidenceLevel = Literal["primary", "review", "database", "inferred", "curated"]
 EvidencePolarity = Literal["supports", "refutes", "mixed", "unknown"]
 Modality = Literal["bulk_rna", "scrna", "snrna", "proteomics", "imaging", "ecg", "physiology", "clinical", "literature", "other"]
+Repository = Literal["GEO", "SRA", "ArrayExpress", "dbGaP", "other"]
 
 
 @dataclass(slots=True)
@@ -17,7 +18,7 @@ class AtlasRecord:
     source_ids: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
-    schema_version: str = "0.2"
+    schema_version: str = "0.3"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -83,7 +84,7 @@ class CellStateRecord(AtlasRecord):
 class DatasetRecord(AtlasRecord):
     record_type: str = "dataset"
     accession: str = ""
-    repository: Literal["GEO", "SRA", "ArrayExpress", "dbGaP", "other"] = "other"
+    repository: Repository = "other"
     study_title: str = ""
     organism: str = ""
     tissue: str = ""
@@ -95,6 +96,55 @@ class DatasetRecord(AtlasRecord):
     release_date: str | None = None
     source_url: str | None = None
     evidence_ids: list[str] = field(default_factory=list)
+    study_id: str | None = None
+    region: str | None = None
+    timepoints: list[str] = field(default_factory=list)
+    quality_flags: list[str] = field(default_factory=list)
 
 
-Record = EvidenceRecord | MarkerRecord | PhenotypeRecord | CellStateRecord | DatasetRecord
+@dataclass(slots=True)
+class StudyRecord(AtlasRecord):
+    record_type: str = "study"
+    accession: str = ""
+    repository: Repository = "other"
+    title: str = ""
+    organism: str = ""
+    tissues: list[str] = field(default_factory=list)
+    modalities: list[Modality] = field(default_factory=list)
+    dataset_ids: list[str] = field(default_factory=list)
+    evidence_ids: list[str] = field(default_factory=list)
+    design: str = ""
+    publication_ids: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class SampleRecord(AtlasRecord):
+    record_type: str = "sample"
+    accession: str = ""
+    dataset_id: str = ""
+    study_id: str | None = None
+    subject_id: str | None = None
+    replicate_group: str | None = None
+    species: str = ""
+    tissue: str = ""
+    region: str | None = None
+    cell_context: str | None = None
+    condition: str = ""
+    timepoint: str | None = None
+    modality: Modality = "other"
+    is_technical_replicate: bool = False
+    metadata_quality: str = "unknown"
+
+
+@dataclass(slots=True)
+class InterventionRecord(AtlasRecord):
+    record_type: str = "intervention"
+    intervention_type: str = ""
+    target: str = ""
+    context: str = ""
+    observed_outcomes: list[str] = field(default_factory=list)
+    phenotype_ids: list[str] = field(default_factory=list)
+    evidence_ids: list[str] = field(default_factory=list)
+
+
+Record = EvidenceRecord | MarkerRecord | PhenotypeRecord | CellStateRecord | DatasetRecord | StudyRecord | SampleRecord | InterventionRecord
