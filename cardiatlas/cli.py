@@ -14,6 +14,7 @@ from .harvest_manifest import create_harvest_manifest
 from .harvest_store import write_harvest
 from .harvester import harvest_plan
 from .identifiers import resolve as resolve_identifier
+from .loader import record_from_dict
 from .models import DatasetRecord, EvidenceRecord
 from .ncbi import NcbiClient
 from .ontology import concepts_by_category, resolve_concept
@@ -49,10 +50,6 @@ def _read_metadata(path: str) -> list[dict[str, object]]:
     raise ValueError("metadata input must be .json, .jsonl, or .csv")
 
 
-def _concept_payload(concept):
-    return {"id": concept.id, "label": concept.label, "category": concept.category, "synonyms": list(concept.synonyms), "parent_id": concept.parent_id}
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="cardiatlas", description="Query and populate the Virelion cardiac knowledge layer.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -71,7 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
     promote.add_argument("input")
     promote.add_argument("--output", required=True)
     reconstruct = sub.add_parser("reconstruct-study", help="reconstruct a GEO study and samples from tabular metadata")
-    reconstruct.add_argument("dataset", help="JSON dataset record file containing one DatasetRecord object")
+    reconstruct.add_argument("dataset", help="JSON file containing one DatasetRecord")
     reconstruct.add_argument("metadata", help="sample metadata as CSV, JSON, or JSONL")
     reconstruct.add_argument("--output", required=True, help="output directory for study, samples, and reconstruction report")
     resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
@@ -129,10 +126,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "reconstruct-study":
         payload = json.loads(Path(args.dataset).read_text(encoding="utf-8"))
-        dataset = DatasetRecord(**payload)
-        rows = _read_metadata(args.metadata)
-        study, samples, report = service.reconstruct_study(dataset.id, rows) if False else (None, None, None)
+        dataset = record_from_dict(payload)
+        if not isinstance(dataset, DatasetRecord):
+            raise ValueError("dataset input must describe a DatasetRecord")
         service.add(dataset)
+        rows = _read_metadata(args.metadata)
         study, samples, report = service.reconstruct_study(dataset.id, rows)
         target = Path(args.output)
         target.mkdir(parents=True, exist_ok=True)
@@ -142,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
                 handle.write(json.dumps(sample.to_dict(), sort_keys=True) + "\n")
         (target / "report.json").write_text(json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
         print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
-        return 0 if not report.warnings else 0
+        return 0
 
     if args.command == "harvest":
         targets = acquisition_plan(args.domain)
