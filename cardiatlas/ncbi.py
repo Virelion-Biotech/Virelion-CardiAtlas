@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import gzip
 import json
+import re
 import time
 import urllib.parse
 import urllib.request
@@ -10,7 +12,7 @@ from dataclasses import dataclass
 
 @dataclass(slots=True)
 class NcbiClient:
-    """Small NCBI E-utilities client using only the Python standard library."""
+    """Small NCBI E-utilities/GEO metadata client using only the Python standard library."""
 
     tool: str = "virelion-cardi-atlas"
     email: str | None = None
@@ -34,6 +36,21 @@ class NcbiClient:
             payload = response.read()
         self._last_request = time.monotonic()
         return payload
+
+    def _geo_request(self, accession: str) -> bytes:
+        accession = accession.strip().upper()
+        if not re.fullmatch(r"GSE\d+", accession):
+            raise ValueError(f"invalid GEO Series accession: {accession}")
+        parent = accession[:-3] + "nnn" if len(accession) > 6 else accession
+        url = f"https://ftp.ncbi.nlm.nih.gov/geo/series/{parent}/{accession}/{accession}_family.soft.gz"
+        request = urllib.request.Request(url, headers={"User-Agent": self.tool})
+        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            payload = response.read()
+        return gzip.decompress(payload)
+
+    def fetch_geo_family_soft(self, accession: str) -> bytes:
+        """Fetch only GEO family SOFT metadata for a Series accession."""
+        return self._geo_request(accession)
 
     def esearch(self, db: str, term: str, retmax: int = 20) -> list[str]:
         payload = self._request("esearch.fcgi", {"db": db, "term": term, "retmode": "json", "retmax": str(retmax)})
