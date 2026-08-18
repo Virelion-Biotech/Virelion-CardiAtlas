@@ -35,15 +35,7 @@ class AtlasService:
         for record in records:
             self.add(record)
 
-    def relate(
-        self,
-        subject: str,
-        predicate: str,
-        object_id: str,
-        evidence_ids: tuple[str, ...] = (),
-        confidence: float | None = None,
-        source: str | None = None,
-    ) -> None:
+    def relate(self, subject: str, predicate: str, object_id: str, evidence_ids: tuple[str, ...] = (), confidence: float | None = None, source: str | None = None) -> None:
         self.graph.add(Relation(subject, predicate, object_id, evidence_ids, confidence, source))
 
     def add_claim(self, claim: Claim) -> None:
@@ -71,22 +63,14 @@ class AtlasService:
         record = self.registry.get(record_id)
         if record is None:
             raise KeyError(record_id)
-        evidence_index = {
-            item.id: item
-            for item in self.registry.all("evidence")
-            if isinstance(item, EvidenceRecord)
-        }
+        evidence_index = {item.id: item for item in self.registry.all("evidence") if isinstance(item, EvidenceRecord)}
         evidence = evidence_for(record, evidence_index)
         score = score_evidence(evidence)
         return {
             "record": record.to_dict(),
             "evidence": [item.to_dict() for item in evidence],
             "evidence_score": score.score,
-            "evidence_metrics": {
-                "count": score.evidence_count,
-                "primary_count": score.primary_count,
-                "independent_sources": score.independent_sources,
-            },
+            "evidence_metrics": {"count": score.evidence_count, "primary_count": score.primary_count, "independent_sources": score.independent_sources},
             "neighbors": self.graph.neighbors(record_id),
             "relations": [r.to_dict() for r in self.graph.subgraph(record_id, hops=1)],
         }
@@ -109,11 +93,7 @@ class AtlasService:
         return assess_study(record, samples)
 
     def assess_claim(self, claim_id: str) -> ClaimAssessment:
-        evidence = {
-            item.id: item
-            for item in self.registry.all("evidence")
-            if isinstance(item, EvidenceRecord)
-        }
+        evidence = {item.id: item for item in self.registry.all("evidence") if isinstance(item, EvidenceRecord)}
         return self.claims.assess(claim_id, evidence)
 
     def release_manifest(self, version: str, schema_version: str = "0.3") -> ReleaseManifest:
@@ -128,13 +108,15 @@ class AtlasService:
             record = self.registry.get(record_id)
             if record is not None:
                 grouped.setdefault(record.record_type, []).append(record_id)
-        provenance = tuple(sorted(set(record_ids)))
         return AtlasContext(
             context_id=context_id,
             phenotype_ids=tuple(grouped.get("phenotype", ())),
             cell_state_ids=tuple(grouped.get("cell_state", ())),
             marker_ids=tuple(grouped.get("marker", ())),
             dataset_ids=tuple(grouped.get("dataset", ())),
+            study_ids=tuple(grouped.get("study", ())),
+            sample_ids=tuple(grouped.get("sample", ())),
+            intervention_ids=tuple(grouped.get("intervention", ())),
             evidence_ids=tuple(grouped.get("evidence", ())),
-            provenance=provenance,
+            provenance=tuple(sorted(set(record_ids))),
         )
