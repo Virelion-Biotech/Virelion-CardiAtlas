@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
 from typing import Any
 
 from .models import DatasetRecord, EvidenceRecord
@@ -22,6 +21,7 @@ def pubmed_summary_to_evidence(summary: dict[str, Any]) -> EvidenceRecord:
         citation += ", et al."
     if journal:
         citation = f"{citation}. {journal}" if citation else journal
+    source_url = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid else None
     return EvidenceRecord(
         id=f"evidence:pubmed:{pmid}",
         name=title or f"PubMed {pmid}",
@@ -31,7 +31,8 @@ def pubmed_summary_to_evidence(summary: dict[str, Any]) -> EvidenceRecord:
         citation=citation,
         evidence_level="primary",
         year=year,
-        metadata={"url": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"},
+        source_url=source_url,
+        metadata={"url": source_url} if source_url else {},
     )
 
 
@@ -47,6 +48,7 @@ def geo_summary_to_dataset(summary: dict[str, Any]) -> DatasetRecord:
     except (TypeError, ValueError):
         sample_count = None
     identifier = accession or uid
+    source_url = f"https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc={identifier}" if identifier else None
     return DatasetRecord(
         id=f"dataset:geo:{identifier}",
         name=title or identifier,
@@ -57,8 +59,9 @@ def geo_summary_to_dataset(summary: dict[str, Any]) -> DatasetRecord:
         organism=organism,
         tissue=tissue,
         sample_count=sample_count,
+        source_url=source_url,
         metadata={
             "ncbi_uid": uid,
-            "url": f"https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc={identifier}",
-        },
+            "url": source_url,
+        } if source_url else {"ncbi_uid": uid},
     )
