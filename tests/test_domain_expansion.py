@@ -1,9 +1,9 @@
 from cardiatlas.catalog import group_datasets
 from cardiatlas.harmonize import harmonize_condition, harmonize_modality
 from cardiatlas.identifiers import resolve, resolve_accession, resolve_gene
-from cardiatlas.models import DatasetRecord, SampleRecord, StudyRecord
+from cardiatlas.models import DatasetRecord, SampleRecord
 from cardiatlas.ontology import canonical_concept_id, descendants
-from cardiatlas.sample_ingest import ingest_sample_rows, sample_from_metadata
+from cardiatlas.sample_ingest import sample_from_metadata
 from cardiatlas.studies import assess_study, study_from_datasets
 
 
@@ -22,12 +22,13 @@ def test_harmonization():
 
 def test_sample_ingestion():
     sample = sample_from_metadata(
-        {"accession": "GSM1", "group": "MI", "subject_id": "animal-1", "modality": "snRNA-seq"},
+        {"accession": "GSM1", "group": "MI", "subject_id": "animal-1", "modality": "snRNA-seq", "is_technical_replicate": "false"},
         dataset_id="dataset:gse1",
         study_id="study:gse1",
     )
     assert sample.condition == "myocardial_infarction"
     assert sample.modality == "snrna"
+    assert sample.is_technical_replicate is False
 
 
 def test_study_qc_and_catalog():
