@@ -26,7 +26,11 @@ jobs:
         run: |
           cardiatlas ontology --category phenotype > /tmp/phenotypes.json
           cardiatlas identifier TNNT2 > /tmp/identifier.json
+          cardiatlas plan --domain myocardial_infarction > /tmp/plan.json
+          cardiatlas corpus > /tmp/corpus.json
           python -m json.tool /tmp/phenotypes.json >/dev/null
           python -m json.tool /tmp/identifier.json >/dev/null
+          python -m json.tool /tmp/plan.json >/dev/null
+          python -m json.tool /tmp/corpus.json >/dev/null
       - name: Build checked-in reference Atlas
         run: cardiatlas build-reference --version "ci"
