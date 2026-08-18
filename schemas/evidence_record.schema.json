@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/evidence_record.schema.json",
+  "title": "CardiAtlas Evidence Record",
+  "type": "object",
+  "required": ["id", "record_type", "name", "source_type", "source_identifier"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "record_type": {"const": "evidence"},
+    "name": {"type": "string", "minLength": 1},
+    "source_type": {"type": "string"},
+    "source_identifier": {"type": "string"},
+    "citation": {"type": "string"},
+    "evidence_level": {"enum": ["primary", "review", "database", "inferred", "curated"]},
+    "organism": {"type": ["string", "null"]},
+    "tissue": {"type": ["string", "null"]},
+    "assay": {"type": ["string", "null"]},
+    "year": {"type": ["integer", "null"]}
+  }
+}
