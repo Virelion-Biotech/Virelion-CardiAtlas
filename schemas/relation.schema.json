@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CardiAtlas Relation",
+  "type": "object",
+  "required": ["subject", "predicate", "object"],
+  "properties": {
+    "subject": {"type": "string", "minLength": 1},
+    "predicate": {"type": "string", "minLength": 1},
+    "object": {"type": "string", "minLength": 1},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "source": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}
