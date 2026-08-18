@@ -2,11 +2,11 @@
 
 **A structured, evidence-aware cardiac biomedical knowledge layer for the Virelion cardiac-AI ecosystem.**
 
-CardiAtlas converts heterogeneous public biomedical information into **typed records, normalized concepts, evidence-linked relationships, contradiction-aware claims, reproducible releases, and portable context objects**.
+CardiAtlas converts heterogeneous public biomedical information into **typed records, normalized concepts, evidence-linked relationships, contradiction-aware claims, study/sample metadata, reproducible releases, and portable context objects**.
 
 ## The role of CardiAtlas
 
-CardiBench is the benchmark/data layer. CardiAtlas is the biological knowledge layer that explains what those datasets contain and how observations relate to cardiac biology.
+CardiBench is the benchmark/data layer. CardiAtlas is the biological knowledge layer that explains what those datasets contain, how studies and samples are structured, and how observations relate to cardiac biology.
 
 ```text
                     PUBLIC KNOWLEDGE
@@ -19,7 +19,7 @@ CardiBench is the benchmark/data layer. CardiAtlas is the biological knowledge l
                  +----------------+
                  |   CardiAtlas    |
                  |-----------------|
-                 | records         |
+                 | entities        |
                  | ontology        |
                  | evidence        |
                  | claims          |
@@ -52,19 +52,19 @@ CardiAtlas natively represents:
 - cardiac phenotypes
 - cell states
 - public datasets
+- studies
+- samples/biological experimental units
+- interventions and observed phenotype-level outcomes
 
-Records carry stable IDs, source metadata, schema versions, organism/tissue context, modalities, tags, and provenance.
+Study-level and sample-level metadata are deliberately separate so downstream systems can reason about subject/donor/animal grouping, technical replicates, cell context, region, condition, and timepoint.
 
 ### 2. Cardiac concept ontology
 
-A lightweight controlled vocabulary now normalizes recurring concepts across the ecosystem, including:
-
-- cardiomyocyte, fibroblast, endothelial, macrophage, pericyte and immune cell types
-- mature, immature, hypertrophic, inflammatory, proliferative and stressed states
-- myocardial infarction, fibrosis, ischemia-reperfusion, inflammation, regeneration, arrhythmia and heart failure phenotypes
-- maturation, remodeling, electrophysiology, angiogenesis and extracellular-matrix remodeling processes
+A lightweight controlled vocabulary normalizes recurring concepts across the ecosystem, including cardiac cell types, maturity/stress states, myocardial injury/remodeling phenotypes, electrophysiology, angiogenesis, extracellular-matrix processes, inflammation, regeneration, and vascular injury.
 
 Resolution is conservative: known synonyms map to a canonical concept; unknown concepts remain unknown rather than being silently guessed.
+
+The ontology supports parent/child traversal so a downstream system can ask for a broad concept such as `cell:immune` and retrieve its controlled descendants.
 
 ### 3. Evidence and contradiction handling
 
@@ -74,104 +74,97 @@ Evidence is not treated as a single truth value. Evidence records carry an expli
 supports / refutes / mixed / unknown
 ```
 
-Claims can therefore be assessed as:
-
-```text
-supported / refuted / conflicted / mixed / undetermined
-```
-
-The system preserves both supporting and refuting evidence instead of averaging disagreement away.
+Claims can therefore be assessed as supported, refuted, conflicted, mixed, or undetermined. Supporting and refuting sources remain queryable rather than being averaged away.
 
 ### 4. Relationship graph
 
-`AtlasGraph` supports typed edges such as:
+`AtlasGraph` stores controlled predicates such as:
 
 ```text
-marker       -> marks            -> cell type
-marker       -> associated_with  -> phenotype
-cell state   -> observed_in      -> dataset
-dataset      -> supported_by     -> evidence
-phenotype    -> supported_by     -> evidence
+marker  -> marks           -> cell type
+marker  -> associated_with -> cell state/phenotype
+phenotype -> involves      -> process
+dataset -> derived_from    -> study
+study   -> has_dataset     -> dataset
+dataset -> has_sample      -> sample
 ```
 
-Edges can carry evidence IDs, confidence, and source metadata. Duplicate edges merge provenance rather than creating silent duplicates.
+Edges carry evidence IDs, confidence, and source metadata. Duplicate edges merge provenance. Unknown predicates are rejected so the published relationship vocabulary stays consistent across downstream projects.
 
-### 5. Dataset quality and CardiBench integration
+### 5. Metadata harmonization and identifier resolution
 
-The repository now exposes a **CardiBench integration contract** rather than making CardiBench a hard dependency.
+The platform includes conservative utilities for:
 
-A dataset can be converted into a portable benchmark candidate containing:
+- gene aliases such as common cardiac gene names;
+- GEO/SRA/BioProject/PMID accession normalization;
+- condition aliases such as sham/control/reference and MI/infarction;
+- single-cell/single-nucleus modality normalization;
+- ontology-backed label resolution.
 
-- accession
-- study title
-- organism
-- tissue
-- modalities
-- conditions
-- sample count
-- cell/nucleus context
-- provenance
+The resolver reports confidence and provenance rather than presenting every fuzzy match as a fact.
 
-A conservative readiness gate checks whether the metadata required for benchmark promotion are actually present. Missing provenance, conditions, modality, organism, tissue, or accession block readiness rather than being inferred.
+### 6. Dataset/study/sample intelligence
 
-The Atlas repository also carries a small cross-project accession catalog for the cardiac datasets already registered by CardiBench. The entries are intentionally metadata-only; they do not duplicate source datasets.
+CardiAtlas can construct a logical study from multiple dataset records, ingest sample metadata rows, normalize conditions/modalities, and assess study-level metadata completeness.
 
-### 6. Persistent backend
+Study QC includes:
 
-`SQLiteAtlasStore` now persists:
+- sample counts;
+- biological subject counts;
+- technical replicate counts;
+- missing subject IDs;
+- missing conditions/timepoints;
+- duplicate sample accessions;
+- warnings about limited leakage-control metadata.
 
-- typed records
-- graph relations
-- release manifests
-- indexed record types and graph endpoints
+### 7. CardiBench integration
 
-The storage layer remains an implementation detail. The public record and relation contracts do not depend on SQLite.
+CardiAtlas exposes a **CardiBench integration contract** rather than hard-depending on CardiBench.
 
-### 7. Deterministic release snapshots
+A dataset can become a portable benchmark candidate containing accession, study title, organism, tissue, modality, conditions, sample count, cell/nucleus context, and provenance. A conservative readiness gate blocks incomplete metadata instead of guessing missing biological labels.
 
-Release manifests contain:
+The repository also carries a small metadata-only catalog of cardiac accessions already registered by CardiBench.
 
-- Atlas version
-- schema version
-- creation timestamp
-- record count
-- record-type counts
-- canonical SHA-256 digest
+### 8. Persistent backend
 
-Canonical serialization makes equivalent record collections hash identically regardless of insertion order.
+`SQLiteAtlasStore` persists typed records and graph relations while keeping the storage backend separate from the public data contract.
 
-### 8. Provenance
+### 9. Reproducible releases
 
-`ProvenanceEvent` and `ProvenanceBundle` provide an audit trail for ingestion, transformation, curation, and publication events without forcing a particular storage engine.
+Release/snapshot manifests contain:
 
-### 9. Unified query/service API
+- package/release version;
+- schema version;
+- creation timestamp;
+- record counts by type;
+- canonical SHA-256 digest.
 
-`AtlasService` combines:
+Equivalent records hash identically regardless of insertion order. A snapshot diff utility identifies added, removed, and changed record IDs between Atlas states.
 
-- registry operations
-- graph operations
-- deterministic search
-- structured queries
-- concept resolution
-- dataset readiness assessment
-- evidence explanation
-- claim assessment
-- release manifests
-- portable `AtlasContext` creation
+### 10. Release readiness
 
-The `AtlasContext` contract is versioned independently so CardiAgent, CardiVex, and CardiEval can exchange biological context without importing each other's internals.
+Before an Atlas release is considered structurally ready, the repository can check:
 
-### 10. NCBI ingestion primitives
+- record/schema validity;
+- unique IDs;
+- duplicate dataset accessions;
+- provenance resolution;
+- non-empty release state;
+- evidence inventory.
 
-A dependency-free NCBI E-utilities client supports explicit retrieval of public metadata for:
+This does not claim that automated checks replace scientific review. Biological disagreement and interpretation remain explicit data problems.
 
-- PubMed searches and summaries
-- PubMed XML
-- GEO/GDS searches
+### 11. Unified service/API layer
 
-Adapters convert these results into CardiAtlas-native records.
+`AtlasService` combines registry, graph, search, structured queries, ontology resolution, identifier resolution, dataset/study QC, claim assessment, release manifests, and portable context generation.
 
-Network access is explicit; tests and package imports do not silently contact external services.
+`AtlasAPI` provides a framework-agnostic facade for downstream services with health, search, resolution, explanation, context, and snapshot operations.
+
+### 12. NCBI ingestion primitives
+
+A dependency-free NCBI E-utilities client supports explicit retrieval of public metadata for PubMed and GEO/GDS. Adapters convert returned source metadata into CardiAtlas records.
+
+Network access is explicit; imports and tests do not silently contact external services.
 
 ## CLI
 
@@ -187,10 +180,11 @@ Examples:
 cardiatlas pubmed "myocardial infarction single cell" --limit 10
 cardiatlas geo "heart myocardial infarction single cell" --limit 10
 cardiatlas resolve "MI"
+cardiatlas identifier TNNT2
+cardiatlas identifier GSE217494
 cardiatlas ontology --category phenotype
+cardiatlas release-check
 ```
-
-The ingestion commands emit normalized JSON suitable for further persistence or processing.
 
 ## Repository layout
 
@@ -199,78 +193,78 @@ cardiatlas/
   models.py          # typed domain records
   ontology.py        # cardiac concept resolution
   normalize.py       # identifiers and labels
+  harmonize.py       # condition/modality harmonization
+  identifiers.py     # conservative identifier resolution
   validation.py      # schema and integrity checks
   registry.py        # in-memory registry
-  sqlite.py          # persistent SQLite backend
-  graph.py           # typed relationship graph
+  sqlite.py          # persistent backend
+  graph.py           # controlled relationship graph
   evidence.py        # evidence scoring
   claims.py          # contradiction-aware claims
   provenance.py      # lineage/audit events
-  query.py           # structured local retrieval
-  service.py         # unified orchestration layer
-  integrations.py    # CardiBench integration contract
-  qc.py              # dataset quality/readiness gates
-  release.py         # deterministic snapshot manifests
-  export.py          # portable release/benchmark exports
+  query.py           # structured retrieval
+  studies.py         # study/sample QC
+  sample_ingest.py   # sample metadata ingestion
+  catalog.py         # dataset grouping/catalog helpers
+  service.py         # orchestration layer
+  api.py             # downstream API facade
+  integrations.py    # CardiBench contract
+  qc.py              # dataset readiness gates
+  release.py         # deterministic manifests
+  release_checks.py  # structural release readiness
+  diff.py            # snapshot diffing
+  export.py          # portable exports
   contracts.py       # cross-repository context contract
-  ingest.py          # JSONL ingestion pipeline
-  ncbi.py            # public NCBI client
-  adapters.py        # source -> Atlas adapters
+  ingest.py          # JSONL ingestion
+  ncbi.py            # NCBI client
+  adapters.py        # source adapters
   io.py              # JSONL interchange
-  cli.py             # command-line interface
+  cli.py             # CLI
 
-schemas/
-  *.schema.json      # machine-readable interchange contracts
-
-data/
-  examples/          # transparent small examples
-  reference/         # cross-project cardiac metadata/reference seeds
-
-tests/
-  *                  # unit/integration-style tests
-
-.github/workflows/
-  test.yml            # multi-version CI
+schemas/              # machine-readable contracts
+data/examples/       # transparent examples
+data/reference/       # cardiac/reference metadata seeds
+docs/                 # architecture, data model, release, integration policy
+tests/                # unit/integration regression tests
+.github/workflows/    # multi-version CI
 ```
 
 ## Interoperability
 
-CardiAtlas is deliberately **backend-agnostic and downstream-friendly**.
-
 ### CardiBench
 
-CardiAtlas provides biological context and dataset metadata; CardiBench remains authoritative for locked benchmark definitions, leakage-aware splits, and benchmark release policy.
+CardiAtlas supplies biological context and normalized study/dataset metadata. CardiBench remains authoritative for locked benchmark definitions, leakage-aware splits, and benchmark release policy.
 
 ### CardiAgent
 
-Agent generation can retrieve normalized phenotypes, cell states, markers, datasets, and supporting evidence to keep generated scenarios tied to explicit biological context.
+Agent generation can retrieve normalized phenotypes, cell states, markers, datasets, study context, and supporting evidence while retaining Atlas provenance.
 
 ### CardiVex
 
-Vex can use Atlas graph neighborhoods and evidence explanations to convert observed phenotype signatures into interpretable candidate states without hard-coding every biological relationship into the detector.
+Vex can use Atlas graph neighborhoods, ontology resolution, and evidence explanations to map observed cardiac signals to interpretable candidate states.
 
 ### CardiEval
 
-Eval can attach model results to an Atlas context, identify which evidence or dataset definitions supported the interpretation, and distinguish supported conclusions from conflicted biological claims.
+Eval can attach model results to an Atlas context and distinguish biological conclusions supported by independent evidence from conflicted or weakly evidenced conclusions.
 
 ### CardiLearn
 
-Learn can use Atlas-linked datasets and normalized metadata to build reproducible training corpora while keeping source provenance separate from model artifacts.
+Learn can build reproducible training corpora from Atlas-linked datasets while preserving study, subject, modality, and provenance metadata.
 
 ## Data principles
 
-1. **Evidence first.** Biological assertions should remain traceable to their source.
-2. **No silent inference.** Unknown metadata are not converted into confident facts.
+1. **Evidence first.** Assertions remain traceable to sources.
+2. **No silent inference.** Unknown metadata are not promoted to confident facts.
 3. **Conflict is data.** Contradictory evidence remains queryable.
-4. **Provenance survives transformation.** Normalization and export should not erase source lineage.
-5. **Reproducibility over convenience.** Release manifests are hashable and deterministic.
+4. **Provenance survives transformation.** Normalization must not erase lineage.
+5. **Reproducibility over convenience.** Releases are hashable and diffable.
 6. **Metadata before raw data.** Public accession metadata can be indexed without redistributing source datasets.
 
 ## Current status
 
-**Phase 3 — platform foundation.** CardiAtlas now has a typed knowledge model, cardiac ontology, evidence/claim layer, graph, deterministic retrieval, persistent storage, reproducible releases, dataset quality gates, CardiBench integration contracts, portable inter-repository context contracts, NCBI ingestion, CLI support, reference data, and expanded automated tests.
+**Phase 4 — platform foundation.** CardiAtlas now has an expanded domain model, controlled cardiac ontology, evidence/claim layer, controlled graph, identifier and metadata harmonization, study/sample intelligence, SQLite persistence, deterministic releases and diffs, release readiness checks, CardiBench integration, portable downstream contracts, NCBI ingestion, CLI/API surfaces, reference metadata, and broader automated regression coverage.
 
-The major work remaining is **large-scale evidence acquisition and normalization**: systematic literature/dataset ingestion, stronger ontology mappings, sample-level dataset harmonization, and a production API/retrieval layer. Those are data-scale and verification problems rather than missing core architecture.
+The major remaining work is now **scale and scientific verification**: systematic literature/dataset acquisition, authoritative ontology mappings, sample-level harmonization across many public studies, richer retrieval/ranking, and deployment of the API as a service. The core architecture is no longer the limiting factor.
 
 ## Scientific scope
 
