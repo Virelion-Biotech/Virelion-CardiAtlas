@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import gzip
-import io
 import re
 from dataclasses import dataclass
 from typing import Iterable
@@ -21,6 +20,9 @@ class GeoSoftSample:
             "species": self.fields.get("Sample_organism_ch1", ""),
             "tissue": self.fields.get("Sample_source_name_ch1", ""),
             "platform": self.fields.get("Sample_platform_id", ""),
+            "library_strategy": self.fields.get("Sample_library_strategy", ""),
+            "molecule": self.fields.get("Sample_molecule_ch1", ""),
+            "cell_type": self.fields.get("Sample_characteristics_ch1", ""),
         }
         row.update(self.characteristics)
         row["geo_accession"] = self.accession
@@ -109,12 +111,7 @@ def parse_geo_soft(text: str) -> list[GeoSoftSample]:
         if not parsed:
             continue
         key, value = parsed
-        if key == "!Sample_characteristics_ch1":
-            parsed_characteristic = _characteristic_value(key, value)
-            if parsed_characteristic:
-                char_key, char_value = parsed_characteristic
-                characteristics.setdefault(char_key, char_value)
-        elif key.startswith("!Sample_characteristics_ch1"):
+        if key.startswith("!Sample_characteristics_ch1"):
             parsed_characteristic = _characteristic_value(key, value)
             if parsed_characteristic:
                 char_key, char_value = parsed_characteristic
