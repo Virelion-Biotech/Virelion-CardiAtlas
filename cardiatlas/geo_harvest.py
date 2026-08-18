@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
 from .adapters import geo_summary_to_dataset
 from .geo_reconstruct import ReconstructionReport, reconstruct_study
 from .geo_soft import parse_geo_soft_bytes, samples_to_rows
-from .harvest_store import write_harvest
-from .models import DatasetRecord, Record, SampleRecord, StudyRecord
+from .models import DatasetRecord, SampleRecord, StudyRecord
 from .ncbi import NcbiClient
 
 
@@ -41,8 +41,6 @@ def reconstruct_geo_series(client: NcbiClient, dataset: DatasetRecord) -> GeoRec
 def write_geo_bundle(bundle: GeoReconstructionBundle, directory: str | Path) -> None:
     target = Path(directory)
     target.mkdir(parents=True, exist_ok=True)
-    (target / "dataset.json").write_text(bundle.dataset.to_dict().__repr__(), encoding="utf-8")
-    import json
     (target / "dataset.json").write_text(json.dumps(bundle.dataset.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     (target / "study.json").write_text(json.dumps(bundle.study.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     with (target / "samples.jsonl").open("w", encoding="utf-8") as handle:
@@ -52,10 +50,12 @@ def write_geo_bundle(bundle: GeoReconstructionBundle, directory: str | Path) -> 
 
 
 def reconstruct_geo_accession(client: NcbiClient, accession: str, summary: dict[str, object] | None = None) -> GeoReconstructionBundle:
+    accession = accession.strip().upper()
     if summary is None:
-        lookup = client.esummary("gds", client.esearch("gds", accession, retmax=1))
-        summary = next((value for key, value in lookup.items() if key != "uids"), {})
+        ids = client.esearch("gds", accession, retmax=1)
+        lookup = client.esummary("gds", ids)
+        summary = next((value for key, value in lookup.items() if key != "uids" and isinstance(value, dict)), {})
     dataset = geo_summary_to_dataset(summary)
-    dataset.accession = accession.upper()
-    dataset.id = f"dataset:geo:{dataset.accession}"
+    dataset.accession = accession
+    dataset.id = f"dataset:geo:{accession}"
     return reconstruct_geo_series(client, dataset)
