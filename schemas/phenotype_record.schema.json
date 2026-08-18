@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/phenotype_record.schema.json",
+  "title": "CardiAtlas Phenotype Record",
+  "type": "object",
+  "required": ["id", "record_type", "name", "category"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "record_type": {"const": "phenotype"},
+    "name": {"type": "string", "minLength": 1},
+    "description": {"type": "string"},
+    "category": {"type": "string"},
+    "synonyms": {"type": "array", "items": {"type": "string"}},
+    "manifestations": {"type": "array", "items": {"type": "string"}},
+    "measurable_features": {"type": "array", "items": {"type": "string"}},
+    "associated_states": {"type": "array", "items": {"type": "string"}},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}}
+  }
+}
