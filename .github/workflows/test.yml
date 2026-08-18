@@ -48,3 +48,24 @@ jobs:
           test -s /tmp/reconstructed/study.json
           test -s /tmp/reconstructed/samples.jsonl
           test -s /tmp/reconstructed/report.json
+      - name: Exercise GEO SOFT parser
+        run: |
+          python - <<'PY'
+          from cardiatlas.geo_soft import parse_geo_soft, samples_to_rows
+          text = '''
+          ^SERIES = GSE999999
+          ^SAMPLE = GSM1000001
+          !Sample_title = MI sample
+          !Sample_geo_accession = GSM1000001
+          !Sample_organism_ch1 = Mus musculus
+          !Sample_source_name_ch1 = heart
+          !Sample_characteristics_ch1 = condition: MI
+          !Sample_characteristics_ch1 = animal_id: mouse01
+          !Sample_characteristics_ch1 = timepoint: 7 dpi
+          !Sample_characteristics_ch1 = region: infarct zone
+          '''
+          rows = samples_to_rows(parse_geo_soft(text))
+          assert rows[0]['accession'] == 'GSM1000001'
+          assert rows[0]['condition'] == 'MI'
+          assert rows[0]['animal_id'] == 'mouse01'
+          PY
