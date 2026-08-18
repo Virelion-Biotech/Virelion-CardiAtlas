@@ -7,6 +7,7 @@ import sys
 from .acquisition import acquisition_plan
 from .adapters import geo_summary_to_dataset, pubmed_summary_to_evidence
 from .build import build_reference
+from .corpus_promote import promote_harvest
 from .harvest_manifest import create_harvest_manifest
 from .harvest_store import write_harvest
 from .harvester import harvest_plan
@@ -36,6 +37,9 @@ def build_parser() -> argparse.ArgumentParser:
     harvest.add_argument("--limit", type=int, default=20)
     harvest.add_argument("--plan-only", action="store_true")
     harvest.add_argument("--output", default=None, help="directory for deduplicated harvest items, normalized records, and manifest")
+    promote = sub.add_parser("promote-harvest", help="promote a harvested artifact into an Atlas candidate corpus")
+    promote.add_argument("input")
+    promote.add_argument("--output", required=True)
     resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
     resolve.add_argument("term")
     identifier = sub.add_parser("identifier", help="resolve a gene symbol, accession, or PMID")
@@ -83,6 +87,11 @@ def main(argv: list[str] | None = None) -> int:
         result = build_reference(args.root, args.version)
         print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
         return 0 if result.readiness.passed else 1
+
+    if args.command == "promote-harvest":
+        report = promote_harvest(args.input, args.output)
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 0 if report["rejected_record_count"] == 0 else 1
 
     if args.command == "harvest":
         targets = acquisition_plan(args.domain)
