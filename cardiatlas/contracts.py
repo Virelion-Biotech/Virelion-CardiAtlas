@@ -13,6 +13,9 @@ class AtlasContext:
     cell_state_ids: tuple[str, ...] = ()
     marker_ids: tuple[str, ...] = ()
     dataset_ids: tuple[str, ...] = ()
+    study_ids: tuple[str, ...] = ()
+    sample_ids: tuple[str, ...] = ()
+    intervention_ids: tuple[str, ...] = ()
     evidence_ids: tuple[str, ...] = ()
     confidence: float | None = None
     provenance: tuple[str, ...] = ()
@@ -25,23 +28,30 @@ class AtlasContext:
             "cell_state_ids": list(self.cell_state_ids),
             "marker_ids": list(self.marker_ids),
             "dataset_ids": list(self.dataset_ids),
+            "study_ids": list(self.study_ids),
+            "sample_ids": list(self.sample_ids),
+            "intervention_ids": list(self.intervention_ids),
             "evidence_ids": list(self.evidence_ids),
             "confidence": self.confidence,
             "provenance": list(self.provenance),
             "metadata": self.metadata,
-            "contract_version": "1.0",
+            "contract_version": "1.1",
         }
 
 
 def context_from_dict(payload: dict[str, Any]) -> AtlasContext:
-    if payload.get("contract_version") not in (None, "1.0"):
-        raise ValueError(f"unsupported atlas context contract: {payload.get('contract_version')}")
+    version = payload.get("contract_version")
+    if version not in (None, "1.0", "1.1"):
+        raise ValueError(f"unsupported atlas context contract: {version}")
     return AtlasContext(
         context_id=str(payload["context_id"]),
         phenotype_ids=tuple(payload.get("phenotype_ids", ())),
         cell_state_ids=tuple(payload.get("cell_state_ids", ())),
         marker_ids=tuple(payload.get("marker_ids", ())),
         dataset_ids=tuple(payload.get("dataset_ids", ())),
+        study_ids=tuple(payload.get("study_ids", ())),
+        sample_ids=tuple(payload.get("sample_ids", ())),
+        intervention_ids=tuple(payload.get("intervention_ids", ())),
         evidence_ids=tuple(payload.get("evidence_ids", ())),
         confidence=payload.get("confidence"),
         provenance=tuple(payload.get("provenance", ())),
