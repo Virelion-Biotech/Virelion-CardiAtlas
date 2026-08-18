@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
 EvidenceLevel = Literal["primary", "review", "database", "inferred", "curated"]
+EvidencePolarity = Literal["supports", "refutes", "mixed", "unknown"]
 Modality = Literal["bulk_rna", "scrna", "snrna", "proteomics", "imaging", "ecg", "physiology", "clinical", "literature", "other"]
 
 
@@ -16,7 +17,7 @@ class AtlasRecord:
     source_ids: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
-    schema_version: str = "0.1"
+    schema_version: str = "0.2"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -29,10 +30,14 @@ class EvidenceRecord(AtlasRecord):
     source_identifier: str = ""
     citation: str = ""
     evidence_level: EvidenceLevel = "curated"
+    polarity: EvidencePolarity = "unknown"
     organism: str | None = None
     tissue: str | None = None
     assay: str | None = None
     year: int | None = None
+    source_url: str | None = None
+    extracted_claim: str = ""
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -87,6 +92,8 @@ class DatasetRecord(AtlasRecord):
     conditions: list[str] = field(default_factory=list)
     sample_count: int | None = None
     cell_count: int | None = None
+    release_date: str | None = None
+    source_url: str | None = None
     evidence_ids: list[str] = field(default_factory=list)
 
 
