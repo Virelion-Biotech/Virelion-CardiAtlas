@@ -7,27 +7,62 @@ import sys
 from .adapters import geo_summary_to_dataset, pubmed_summary_to_evidence
 from .models import EvidenceRecord
 from .ncbi import NcbiClient
+from .ontology import concepts_by_category, resolve_concept
+from .qc import audit_datasets
 from .service import AtlasService
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="cardiatlas", description="Query and populate the Virelion cardiac knowledge layer.")
     sub = parser.add_subparsers(dest="command", required=True)
+
     search = sub.add_parser("pubmed", help="search PubMed and emit normalized evidence records")
     search.add_argument("term")
     search.add_argument("--limit", type=int, default=20)
+
     geo = sub.add_parser("geo", help="search GEO through NCBI and emit normalized dataset records")
     geo.add_argument("term")
     geo.add_argument("--limit", type=int, default=20)
-    explain = sub.add_parser("explain", help="show a JSON record payload")
+
+    resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
+    resolve.add_argument("term")
+
+    ontology = sub.add_parser("ontology", help="list controlled cardiac concepts")
+    ontology.add_argument("--category", default=None)
+
+    explain = sub.add_parser("explain", help="show a JSON record payload from an in-memory service")
     explain.add_argument("record_id")
+
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    client = NcbiClient()
     service = AtlasService.empty()
+
+    if args.command == "resolve":
+        concept = resolve_concept(args.term)
+        if concept is None:
+            print(json.dumps({"resolved": False, "input": args.term}, indent=2))
+            return 1
+        print(json.dumps({"resolved": True, "concept": concept.__dict__ if hasattr(concept, "__dict__") else {
+            "id": concept.id,
+            "label": concept.label,
+            "category": concept.category,
+            "synonyms": list(concept.synonyms),
+            "parent_id": concept.parent_id,
+        }}, indent=2, sort_keys=True))
+        return 0
+
+    if args.command == "ontology":
+        concepts = concepts_by_category(args.category) if args.category else concepts_by_category("cell_type") + concepts_by_category("cell_state") + concepts_by_category("phenotype") + concepts_by_category("process")
+        print(json.dumps([
+            {"id": item.id, "label": item.label, "category": item.category, "synonyms": list(item.synonyms), "parent_id": item.parent_id}
+            for item in concepts
+        ], indent=2, sort_keys=True))
+        return 0
+
+    client = NcbiClient()
     if args.command == "pubmed":
         result = client.search_pubmed(args.term, args.limit)
         records: list[EvidenceRecord] = [pubmed_summary_to_evidence(item) for uid, item in result["summaries"].items() if uid != "uids"]
@@ -35,6 +70,7 @@ def main(argv: list[str] | None = None) -> int:
             service.add(record)
         print(json.dumps([record.to_dict() for record in records], indent=2, sort_keys=True))
         return 0
+
     if args.command == "geo":
         result = client.search_geo(args.term, args.limit)
         records = [geo_summary_to_dataset(item) for uid, item in result["summaries"].items() if uid != "uids"]
@@ -42,6 +78,7 @@ def main(argv: list[str] | None = None) -> int:
             service.add(record)
         print(json.dumps([record.to_dict() for record in records], indent=2, sort_keys=True))
         return 0
+
     if args.command == "explain":
         try:
             print(json.dumps(service.explain(args.record_id), indent=2, sort_keys=True))
