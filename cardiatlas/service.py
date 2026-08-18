@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from .claims import Claim, ClaimAssessment, ClaimStore
 from .contracts import AtlasContext
+from .corpus import CorpusReport, corpus_report
 from .evidence import evidence_for, score_evidence
 from .graph import AtlasGraph, Relation
 from .identifiers import IdentifierResolution, resolve as resolve_identifier
@@ -14,6 +15,7 @@ from .qc import assess_dataset
 from .registry import AtlasRegistry
 from .release import ReleaseManifest, create_manifest
 from .release_checks import ReleaseReadiness, assess_release
+from .retrieval import RetrievalResult, neighborhood_retrieve, retrieve
 from .search import search_records
 from .studies import StudyQC, assess_study
 
@@ -46,6 +48,12 @@ class AtlasService:
 
     def query(self, query: Query) -> list[QueryHit]:
         return query_registry(self.registry, query)
+
+    def retrieve(self, query: str, record_type: str | None = None, limit: int = 20) -> list[RetrievalResult]:
+        return retrieve(self.registry, query, record_type=record_type, limit=limit)
+
+    def retrieve_with_context(self, query: str, hops: int = 1, limit: int = 20) -> list[dict[str, object]]:
+        return neighborhood_retrieve(self.registry, self.graph, query, hops=hops, limit=limit)
 
     def resolve(self, value: str) -> str | None:
         return canonical_concept_id(value)
@@ -101,6 +109,9 @@ class AtlasService:
 
     def release_readiness(self) -> ReleaseReadiness:
         return assess_release(self.registry.all())
+
+    def corpus_report(self) -> CorpusReport:
+        return corpus_report(self.registry.all())
 
     def atlas_context(self, context_id: str, record_ids: list[str]) -> AtlasContext:
         grouped: dict[str, list[str]] = {}
