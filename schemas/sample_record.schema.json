@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Virelion-Biotech/Virelion-CardiAtlas/blob/main/schemas/sample_record.schema.json",
+  "title": "CardiAtlas Sample Record",
+  "type": "object",
+  "required": ["id", "record_type", "name", "accession", "dataset_id", "condition"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "record_type": {"const": "sample"},
+    "name": {"type": "string", "minLength": 1},
+    "accession": {"type": "string", "minLength": 1},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "study_id": {"type": ["string", "null"]},
+    "subject_id": {"type": ["string", "null"]},
+    "replicate_group": {"type": ["string", "null"]},
+    "species": {"type": "string"},
+    "tissue": {"type": "string"},
+    "region": {"type": ["string", "null"]},
+    "cell_context": {"type": ["string", "null"]},
+    "condition": {"type": "string"},
+    "timepoint": {"type": ["string", "null"]},
+    "modality": {"type": "string"},
+    "is_technical_replicate": {"type": "boolean"},
+    "metadata_quality": {"type": "string"},
+    "schema_version": {"const": "0.3"}
+  }
+}
