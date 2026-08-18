@@ -10,6 +10,7 @@ from .corpus import CorpusReport, corpus_report
 from .diff import SnapshotDiff, diff_records
 from .evidence import EvidenceScore, score_evidence
 from .export import write_cardiBench_candidates, write_records, write_release
+from .geo_reconstruct import ReconstructionDecision, ReconstructionReport, reconstruct_samples, reconstruct_study
 from .graph import AtlasGraph, Relation
 from .harmonize import HarmonizedValue, harmonize_condition, harmonize_label, harmonize_modality
 from .harvest import HarvestItem, canonical_digest, deduplicate_harvest, harvest_report
@@ -43,16 +44,16 @@ __all__ = [
     "BenchmarkCandidate", "CatalogGroup", "CellStateRecord", "Claim", "ClaimAssessment", "ClaimStore", "Concept",
     "CorpusReport", "DatasetRecord", "EvidenceRecord", "EvidenceScore", "HarvestBatch", "HarvestItem", "HarvestManifest", "HarvestQC", "HarmonizedValue", "IdentifierResolution",
     "InterventionRecord", "MarkerRecord", "PhenotypeRecord", "PromotionDecision", "ProvenanceBundle", "ProvenanceEvent", "Query", "QueryHit",
-    "QualityReport", "ReferenceBuild", "Relation", "ReleaseCheck", "ReleaseManifest", "ReleaseReadiness", "RetrievalResult",
+    "QualityReport", "ReconstructionDecision", "ReconstructionReport", "ReferenceBuild", "Relation", "ReleaseCheck", "ReleaseManifest", "ReleaseReadiness", "RetrievalResult",
     "SampleRecord", "SnapshotDiff", "SourceResult", "SQLiteAtlasStore", "StudyQC", "StudyRecord", "acquisition_plan",
     "assess_dataset", "assess_harvest", "assess_release", "assess_study", "attach_datasets", "audit_datasets", "benchmark_readiness", "build_reference",
     "canonical_concept_id", "canonical_digest", "canonical_key", "concepts_by_category", "context_from_dict", "corpus_report", "create_harvest_manifest", "create_manifest",
     "dataset_to_benchmark_candidate", "decide_promotion", "deduplicate_harvest", "descendants", "diff_records", "digest_records", "graph_context", "group_datasets",
     "harvest_plan", "harvest_report", "harvest_target", "harmonize_condition", "harmonize_label", "harmonize_modality", "ingest_sample_rows",
     "ingest_source", "load_into_registry", "migrate_payload", "migrate_records", "neighborhood_retrieve", "normalize_accession", "normalize_gene_symbol",
-    "normalize_label", "normalize_species", "plan_as_dict", "populate_registry", "promote_records", "query_registry", "read_bundle", "read_harvest", "record_from_dict",
+    "normalize_label", "normalize_species", "plan_as_dict", "populate_registry", "promote_records", "query_registry", "read_bundle", "read_harvest", "reconstruct_samples", "reconstruct_study", "record_from_dict",
     "resolve_concept", "resolve_identifier", "retrieve", "sample_from_metadata", "score_evidence", "study_from_datasets", "verify_digest", "write_harvest",
     "write_cardiBench_candidates", "write_records", "write_release",
 ]
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
