@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Iterable
 
+from .schema import RELATION_TYPES
+
 
 @dataclass(frozen=True, slots=True)
 class Relation:
@@ -20,11 +22,7 @@ class Relation:
 
 
 class AtlasGraph:
-    """Deterministic in-memory graph over Atlas record identifiers.
-
-    The graph is deliberately storage-agnostic so it can later back onto a
-    database or graph engine without changing CardiAtlas's relationship API.
-    """
+    """Deterministic in-memory graph over Atlas record identifiers."""
 
     def __init__(self, relations: Iterable[Relation] = ()) -> None:
         self._relations: list[Relation] = []
@@ -35,18 +33,22 @@ class AtlasGraph:
     def add(self, relation: Relation) -> None:
         if not relation.subject or not relation.predicate or not relation.object:
             raise ValueError("subject, predicate, and object are required")
+        if relation.predicate not in RELATION_TYPES:
+            raise ValueError(f"unsupported relationship predicate: {relation.predicate}")
         if relation.confidence is not None and not 0 <= relation.confidence <= 1:
             raise ValueError("confidence must be between 0 and 1")
         key = (relation.subject, relation.predicate, relation.object)
         existing = self._index.get(key)
         if existing is not None:
-            if relation.evidence_ids:
-                evidence = tuple(dict.fromkeys(existing.evidence_ids + relation.evidence_ids))
-                relation = Relation(existing.subject, existing.predicate, existing.object, evidence,
-                                    relation.confidence if relation.confidence is not None else existing.confidence,
-                                    relation.source or existing.source)
-            else:
-                relation = existing
+            evidence = tuple(dict.fromkeys(existing.evidence_ids + relation.evidence_ids))
+            relation = Relation(
+                existing.subject,
+                existing.predicate,
+                existing.object,
+                evidence,
+                relation.confidence if relation.confidence is not None else existing.confidence,
+                relation.source or existing.source,
+            )
             self._index[key] = relation
             self._relations[self._relations.index(existing)] = relation
             return
@@ -55,11 +57,15 @@ class AtlasGraph:
 
     def relations(self, predicate: str | None = None) -> list[Relation]:
         values = self._relations
+        if predicate is not None and predicate not in RELATION_TYPES:
+            raise ValueError(f"unsupported relationship predicate: {predicate}")
         if predicate is not None:
             values = [r for r in values if r.predicate == predicate]
         return list(values)
 
     def neighbors(self, node_id: str, predicate: str | None = None) -> list[str]:
+        if predicate is not None and predicate not in RELATION_TYPES:
+            raise ValueError(f"unsupported relationship predicate: {predicate}")
         values: set[str] = set()
         for relation in self._relations:
             if predicate is not None and relation.predicate != predicate:
@@ -76,11 +82,15 @@ class AtlasGraph:
         frontier = {node_id}
         seen = {node_id}
         selected: list[Relation] = []
+        selected_keys: set[tuple[str, str, str]] = set()
         for _ in range(hops):
             next_frontier: set[str] = set()
             for relation in self._relations:
                 if relation.subject in frontier or relation.object in frontier:
-                    selected.append(relation)
+                    key = (relation.subject, relation.predicate, relation.object)
+                    if key not in selected_keys:
+                        selected_keys.add(key)
+                        selected.append(relation)
                     for node in (relation.subject, relation.object):
                         if node not in seen:
                             seen.add(node)
