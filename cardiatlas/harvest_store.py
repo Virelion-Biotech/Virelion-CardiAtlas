@@ -6,6 +6,7 @@ from typing import Iterable
 
 from .harvest import HarvestItem, deduplicate_harvest
 from .harvest_manifest import HarvestManifest, create_harvest_manifest
+from .models import Record
 
 
 def write_harvest(
@@ -14,6 +15,7 @@ def write_harvest(
     *,
     version: str = "1.0",
     created_at: str | None = None,
+    records: Iterable[Record] | None = None,
 ) -> HarvestManifest:
     target = Path(directory)
     target.mkdir(parents=True, exist_ok=True)
@@ -22,6 +24,14 @@ def write_harvest(
     with (target / "items.jsonl").open("w", encoding="utf-8") as handle:
         for item in materialized:
             handle.write(json.dumps(item.to_dict(), sort_keys=True, ensure_ascii=False) + "\n")
+    if records is not None:
+        with (target / "records.jsonl").open("w", encoding="utf-8") as handle:
+            seen: set[str] = set()
+            for record in records:
+                if record.id in seen:
+                    continue
+                seen.add(record.id)
+                handle.write(json.dumps(record.to_dict(), sort_keys=True, ensure_ascii=False) + "\n")
     (target / "manifest.json").write_text(
         json.dumps(manifest.to_dict(), indent=2, sort_keys=True, ensure_ascii=False) + "\n",
         encoding="utf-8",
