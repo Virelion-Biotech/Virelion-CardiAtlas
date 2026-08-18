@@ -7,9 +7,11 @@ import sys
 from .acquisition import acquisition_plan
 from .adapters import geo_summary_to_dataset, pubmed_summary_to_evidence
 from .build import build_reference
+from .harvest_manifest import create_harvest_manifest
+from .harvest_store import write_harvest
+from .harvester import harvest_plan
 from .identifiers import resolve as resolve_identifier
 from .models import EvidenceRecord
-from .harvester import harvest_plan
 from .ncbi import NcbiClient
 from .ontology import concepts_by_category, resolve_concept
 from .release_checks import assess_release
@@ -33,6 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     harvest.add_argument("--domain", default=None)
     harvest.add_argument("--limit", type=int, default=20)
     harvest.add_argument("--plan-only", action="store_true")
+    harvest.add_argument("--output", default=None, help="directory for deduplicated harvest items and manifest")
     resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
     resolve.add_argument("term")
     identifier = sub.add_parser("identifier", help="resolve a gene symbol, accession, or PMID")
@@ -88,13 +91,20 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         client = NcbiClient()
         batches = harvest_plan(client, targets, limit=args.limit)
+        items = [item for batch in batches for item in batch.items]
+        manifest = create_harvest_manifest(items, version="1.0")
+        if args.output:
+            manifest = write_harvest(items, args.output, version="1.0", created_at=manifest.created_at)
         payload = {
             "target_count": len(batches),
             "record_count": sum(len(batch.records) for batch in batches),
+            "item_count": len(items),
+            "manifest": manifest.to_dict(),
+            "output": args.output,
             "batches": [batch.to_dict() for batch in batches],
         }
         print(json.dumps(payload, indent=2, sort_keys=True))
-        return 0
+        return 0 if manifest.qc.passed else 1
 
     client = NcbiClient()
     if args.command == "pubmed":
