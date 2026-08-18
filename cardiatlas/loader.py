@@ -4,17 +4,8 @@ import json
 from pathlib import Path
 from typing import Iterable
 
-from .models import (
-    CellStateRecord,
-    DatasetRecord,
-    EvidenceRecord,
-    InterventionRecord,
-    MarkerRecord,
-    PhenotypeRecord,
-    SampleRecord,
-    StudyRecord,
-    Record,
-)
+from .migrate import migrate_payload
+from .models import CellStateRecord, DatasetRecord, EvidenceRecord, InterventionRecord, MarkerRecord, PhenotypeRecord, SampleRecord, StudyRecord, Record
 from .registry import AtlasRegistry
 from .validation import require_valid
 
@@ -31,6 +22,7 @@ _RECORD_CLASSES = {
 
 
 def record_from_dict(payload: dict) -> Record:
+    payload = migrate_payload(payload) if payload.get("schema_version") == "0.2" else payload
     record_type = payload.get("record_type")
     cls = _RECORD_CLASSES.get(record_type)
     if cls is None:
