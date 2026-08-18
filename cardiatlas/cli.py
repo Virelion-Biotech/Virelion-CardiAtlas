@@ -5,11 +5,25 @@ import json
 import sys
 
 from .adapters import geo_summary_to_dataset, pubmed_summary_to_evidence
+from .identifiers import resolve as resolve_identifier
 from .models import EvidenceRecord
 from .ncbi import NcbiClient
 from .ontology import concepts_by_category, resolve_concept
 from .qc import audit_datasets
+from .release_checks import assess_release
+from .sample_ingest import ingest_sample_rows
 from .service import AtlasService
+from .studies import assess_study
+
+
+def _concept_payload(concept):
+    return {
+        "id": concept.id,
+        "label": concept.label,
+        "category": concept.category,
+        "synonyms": list(concept.synonyms),
+        "parent_id": concept.parent_id,
+    }
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -27,8 +41,14 @@ def build_parser() -> argparse.ArgumentParser:
     resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
     resolve.add_argument("term")
 
+    identifier = sub.add_parser("identifier", help="resolve a gene symbol, accession, or PMID")
+    identifier.add_argument("value")
+    identifier.add_argument("--type", dest="identifier_type", default=None)
+
     ontology = sub.add_parser("ontology", help="list controlled cardiac concepts")
     ontology.add_argument("--category", default=None)
+
+    release = sub.add_parser("release-check", help="run release integrity checks on in-memory records")
 
     explain = sub.add_parser("explain", help="show a JSON record payload from an in-memory service")
     explain.add_argument("record_id")
@@ -45,37 +65,43 @@ def main(argv: list[str] | None = None) -> int:
         if concept is None:
             print(json.dumps({"resolved": False, "input": args.term}, indent=2))
             return 1
-        print(json.dumps({"resolved": True, "concept": concept.__dict__ if hasattr(concept, "__dict__") else {
-            "id": concept.id,
-            "label": concept.label,
-            "category": concept.category,
-            "synonyms": list(concept.synonyms),
-            "parent_id": concept.parent_id,
-        }}, indent=2, sort_keys=True))
+        print(json.dumps({"resolved": True, "concept": _concept_payload(concept)}, indent=2, sort_keys=True))
         return 0
+
+    if args.command == "identifier":
+        resolution = resolve_identifier(args.value, args.identifier_type)
+        print(json.dumps({
+            "query": resolution.query,
+            "canonical_id": resolution.canonical_id,
+            "identifier_type": resolution.identifier_type,
+            "confidence": resolution.confidence,
+            "matched_alias": resolution.matched_alias,
+            "source": resolution.source,
+        }, indent=2, sort_keys=True))
+        return 0 if resolution.canonical_id else 1
 
     if args.command == "ontology":
         concepts = concepts_by_category(args.category) if args.category else concepts_by_category("cell_type") + concepts_by_category("cell_state") + concepts_by_category("phenotype") + concepts_by_category("process")
-        print(json.dumps([
-            {"id": item.id, "label": item.label, "category": item.category, "synonyms": list(item.synonyms), "parent_id": item.parent_id}
-            for item in concepts
-        ], indent=2, sort_keys=True))
+        print(json.dumps([_concept_payload(item) for item in concepts], indent=2, sort_keys=True))
         return 0
+
+    if args.command == "release-check":
+        result = assess_release(service.registry.all())
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return 0 if result.passed else 1
 
     client = NcbiClient()
     if args.command == "pubmed":
         result = client.search_pubmed(args.term, args.limit)
         records: list[EvidenceRecord] = [pubmed_summary_to_evidence(item) for uid, item in result["summaries"].items() if uid != "uids"]
-        for record in records:
-            service.add(record)
+        service.add_many(records)
         print(json.dumps([record.to_dict() for record in records], indent=2, sort_keys=True))
         return 0
 
     if args.command == "geo":
         result = client.search_geo(args.term, args.limit)
         records = [geo_summary_to_dataset(item) for uid, item in result["summaries"].items() if uid != "uids"]
-        for record in records:
-            service.add(record)
+        service.add_many(records)
         print(json.dumps([record.to_dict() for record in records], indent=2, sort_keys=True))
         return 0
 
