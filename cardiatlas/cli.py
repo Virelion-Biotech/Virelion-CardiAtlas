@@ -4,16 +4,15 @@ import argparse
 import json
 import sys
 
-from .acquisition import plan_as_dict
+from .acquisition import acquisition_plan
 from .adapters import geo_summary_to_dataset, pubmed_summary_to_evidence
 from .build import build_reference
-from .corpus import corpus_report
 from .identifiers import resolve as resolve_identifier
 from .models import EvidenceRecord
+from .harvester import harvest_plan
 from .ncbi import NcbiClient
 from .ontology import concepts_by_category, resolve_concept
 from .release_checks import assess_release
-from .retrieval import neighborhood_retrieve, retrieve
 from .service import AtlasService
 
 
@@ -30,6 +29,10 @@ def build_parser() -> argparse.ArgumentParser:
     geo = sub.add_parser("geo", help="search GEO through NCBI and emit normalized dataset records")
     geo.add_argument("term")
     geo.add_argument("--limit", type=int, default=20)
+    harvest = sub.add_parser("harvest", help="execute the bounded public acquisition plan")
+    harvest.add_argument("--domain", default=None)
+    harvest.add_argument("--limit", type=int, default=20)
+    harvest.add_argument("--plan-only", action="store_true")
     resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
     resolve.add_argument("term")
     identifier = sub.add_parser("identifier", help="resolve a gene symbol, accession, or PMID")
@@ -37,21 +40,10 @@ def build_parser() -> argparse.ArgumentParser:
     identifier.add_argument("--type", dest="identifier_type", default=None)
     ontology = sub.add_parser("ontology", help="list controlled cardiac concepts")
     ontology.add_argument("--category", default=None)
-    plan = sub.add_parser("plan", help="show the bounded cardiac evidence acquisition plan")
-    plan.add_argument("--domain", default=None)
-    release = sub.add_parser("release-check", help="run release integrity checks on the current empty/in-memory service")
+    release = sub.add_parser("release-check", help="run release integrity checks on the current in-memory service")
     build = sub.add_parser("build-reference", help="build the checked-in reference Atlas and emit a manifest")
     build.add_argument("--root", default=".")
-    build.add_argument("--version", default="0.5.0")
-    corpus = sub.add_parser("corpus", help="report corpus composition for an in-memory service")
-    retrieve_cmd = sub.add_parser("retrieve", help="run evidence-aware retrieval against an in-memory service")
-    retrieve_cmd.add_argument("query")
-    retrieve_cmd.add_argument("--type", dest="record_type", default=None)
-    retrieve_cmd.add_argument("--limit", type=int, default=20)
-    context = sub.add_parser("context-search", help="retrieve records with graph neighborhoods")
-    context.add_argument("query")
-    context.add_argument("--hops", type=int, default=1)
-    context.add_argument("--limit", type=int, default=20)
+    build.add_argument("--version", default="0.4.0")
     explain = sub.add_parser("explain", help="show a JSON record payload from an in-memory service")
     explain.add_argument("record_id")
     return parser
@@ -79,10 +71,6 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps([_concept_payload(item) for item in concepts], indent=2, sort_keys=True))
         return 0
 
-    if args.command == "plan":
-        print(json.dumps(plan_as_dict(args.domain), indent=2, sort_keys=True))
-        return 0
-
     if args.command == "release-check":
         result = assess_release(service.registry.all())
         print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
@@ -93,17 +81,19 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
         return 0 if result.readiness.passed else 1
 
-    if args.command == "corpus":
-        print(json.dumps(corpus_report(service.registry.all()).to_dict(), indent=2, sort_keys=True))
-        return 0
-
-    if args.command in {"retrieve", "context-search"}:
-        if args.command == "retrieve":
-            result = retrieve(service.registry, args.query, record_type=args.record_type, limit=args.limit)
-            print(json.dumps([item.to_dict() for item in result], indent=2, sort_keys=True))
-        else:
-            result = neighborhood_retrieve(service.registry, service.graph, args.query, hops=args.hops, limit=args.limit)
-            print(json.dumps(result, indent=2, sort_keys=True))
+    if args.command == "harvest":
+        targets = acquisition_plan(args.domain)
+        if args.plan_only:
+            print(json.dumps([target.to_dict() for target in targets], indent=2, sort_keys=True))
+            return 0
+        client = NcbiClient()
+        batches = harvest_plan(client, targets, limit=args.limit)
+        payload = {
+            "target_count": len(batches),
+            "record_count": sum(len(batch.records) for batch in batches),
+            "batches": [batch.to_dict() for batch in batches],
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
 
     client = NcbiClient()
