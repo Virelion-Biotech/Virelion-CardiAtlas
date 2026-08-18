@@ -1,5 +1,6 @@
 """Virelion CardiAtlas: structured cardiac biomedical knowledge."""
 
+from .claims import Claim, ClaimAssessment, ClaimStore
 from .evidence import EvidenceScore, score_evidence
 from .graph import AtlasGraph, Relation
 from .models import (
@@ -13,19 +14,24 @@ from .models import (
 from .normalize import canonical_key, normalize_accession, normalize_gene_symbol, normalize_label, normalize_species
 from .registry import AtlasRegistry
 from .service import AtlasService
+from .sqlite import SQLiteAtlasStore
 
 __all__ = [
-    "AtlasRecord",
     "AtlasGraph",
+    "AtlasRecord",
     "AtlasRegistry",
     "AtlasService",
     "CellStateRecord",
+    "Claim",
+    "ClaimAssessment",
+    "ClaimStore",
     "DatasetRecord",
     "EvidenceRecord",
     "EvidenceScore",
     "MarkerRecord",
     "PhenotypeRecord",
     "Relation",
+    "SQLiteAtlasStore",
     "canonical_key",
     "normalize_accession",
     "normalize_gene_symbol",
