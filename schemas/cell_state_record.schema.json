@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/cell_state_record.schema.json",
+  "title": "CardiAtlas Cell State Record",
+  "type": "object",
+  "required": ["id", "record_type", "name", "cell_type", "state"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "record_type": {"const": "cell_state"},
+    "name": {"type": "string", "minLength": 1},
+    "description": {"type": "string"},
+    "cell_type": {"type": "string"},
+    "state": {"type": "string"},
+    "parent_states": {"type": "array", "items": {"type": "string"}},
+    "marker_ids": {"type": "array", "items": {"type": "string"}},
+    "pathways": {"type": "array", "items": {"type": "string"}},
+    "phenotypes": {"type": "array", "items": {"type": "string"}},
+    "species": {"type": "array", "items": {"type": "string"}},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}}
+  }
+}
