@@ -5,9 +5,10 @@ import sqlite3
 from pathlib import Path
 from typing import Iterable
 
-from .graph import Relation
+from .graph import AtlasGraph, Relation
 from .models import Record
 from .release import create_manifest
+from .schema import SCHEMA_VERSION
 
 
 class SQLiteAtlasStore:
@@ -57,10 +58,7 @@ class SQLiteAtlasStore:
         self._connection.commit()
 
     def upsert_many(self, records: Iterable[Record]) -> int:
-        rows = [
-            (record.id, record.record_type, record.name, json.dumps(record.to_dict(), sort_keys=True, ensure_ascii=False))
-            for record in records
-        ]
+        rows = [(record.id, record.record_type, record.name, json.dumps(record.to_dict(), sort_keys=True, ensure_ascii=False)) for record in records]
         self._connection.executemany(
             "INSERT INTO records(id, record_type, name, payload) VALUES(?,?,?,?) "
             "ON CONFLICT(id) DO UPDATE SET record_type=excluded.record_type, name=excluded.name, payload=excluded.payload",
@@ -74,7 +72,7 @@ class SQLiteAtlasStore:
         self._connection.execute(
             "INSERT INTO relations(subject,predicate,object_id,payload) VALUES(?,?,?,?) "
             "ON CONFLICT(subject,predicate,object_id) DO UPDATE SET payload=excluded.payload",
-            (relation.subject, relation.predicate, relation.object_id, payload),
+            (relation.subject, relation.predicate, relation.object, payload),
         )
         self._connection.commit()
 
@@ -84,6 +82,23 @@ class SQLiteAtlasStore:
             (node_id, node_id),
         ).fetchall()
         return [json.loads(row["payload"]) for row in rows]
+
+    def all_relations(self) -> list[dict]:
+        rows = self._connection.execute("SELECT payload FROM relations ORDER BY subject,predicate,object_id").fetchall()
+        return [json.loads(row["payload"]) for row in rows]
+
+    def graph(self) -> AtlasGraph:
+        relations = []
+        for payload in self.all_relations():
+            relations.append(Relation(
+                subject=payload["subject"],
+                predicate=payload["predicate"],
+                object=payload["object"],
+                evidence_ids=tuple(payload.get("evidence_ids", ())),
+                confidence=payload.get("confidence"),
+                source=payload.get("source"),
+            ))
+        return AtlasGraph(relations)
 
     def get_payload(self, record_id: str) -> dict | None:
         row = self._connection.execute("SELECT payload FROM records WHERE id=?", (record_id,)).fetchone()
@@ -108,7 +123,7 @@ class SQLiteAtlasStore:
             row = self._connection.execute("SELECT COUNT(*) AS n FROM records WHERE record_type=?", (record_type,)).fetchone()
         return int(row["n"])
 
-    def save_release(self, records: Iterable[Record], version: str, schema_version: str = "0.2") -> dict:
+    def save_release(self, records: Iterable[Record], version: str, schema_version: str = SCHEMA_VERSION) -> dict:
         manifest = create_manifest(records, version, schema_version).to_dict()
         self._connection.execute(
             "INSERT OR REPLACE INTO releases(version, manifest) VALUES(?, ?)",
