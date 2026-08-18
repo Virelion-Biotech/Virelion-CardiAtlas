@@ -24,15 +24,15 @@ ID_NAMESPACES = {
     "intervention": "intervention",
 }
 
-# Relationship vocabulary used across downstream integrations. New predicates
-# should be added here before they appear in published Atlas releases.
 RELATION_TYPES = (
     "supports",
     "refutes",
     "mixed_evidence_for",
     "expressed_in",
+    "marks",
     "associated_with",
     "observed_in",
+    "involves",
     "derived_from",
     "part_of",
     "has_sample",
