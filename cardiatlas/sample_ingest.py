@@ -7,12 +7,15 @@ from .models import SampleRecord
 from .normalize import canonical_key
 
 
-def sample_from_metadata(
-    row: Mapping[str, object],
-    *,
-    dataset_id: str,
-    study_id: str | None = None,
-) -> SampleRecord:
+def _as_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "t"}
+
+
+def sample_from_metadata(row: Mapping[str, object], *, dataset_id: str, study_id: str | None = None) -> SampleRecord:
     accession = str(row.get("accession") or row.get("sample_accession") or "").strip()
     if not accession:
         raise ValueError("sample metadata requires accession")
@@ -45,7 +48,7 @@ def sample_from_metadata(
         condition=condition.normalized if condition else raw_condition,
         timepoint=str(row.get("timepoint")) if row.get("timepoint") else None,
         modality=modality.normalized if modality.normalized in {"bulk_rna", "scrna", "snrna", "proteomics", "imaging", "ecg", "physiology", "clinical", "literature", "other"} else "other",
-        is_technical_replicate=bool(row.get("is_technical_replicate", False)),
+        is_technical_replicate=_as_bool(row.get("is_technical_replicate", False)),
         metadata_quality=str(row.get("metadata_quality") or "normalized"),
         metadata=normalized,
     )
