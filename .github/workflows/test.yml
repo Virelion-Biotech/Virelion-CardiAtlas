@@ -28,3 +28,5 @@ jobs:
           cardiatlas identifier TNNT2 > /tmp/identifier.json
           python -m json.tool /tmp/phenotypes.json >/dev/null
           python -m json.tool /tmp/identifier.json >/dev/null
+      - name: Build checked-in reference Atlas
+        run: cardiatlas build-reference --version "ci"
