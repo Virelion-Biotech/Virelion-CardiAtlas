@@ -1,5 +1,5 @@
 SCHEMA_NAME = "virelion-cardi-atlas"
-SCHEMA_VERSION = "0.1"
+SCHEMA_VERSION = "0.2"
 
 RECORD_TYPES = (
     "evidence",
@@ -17,4 +17,10 @@ ID_NAMESPACES = {
     "phenotype": "phenotype",
     "cell_state": "cell-state",
     "dataset": "dataset",
+}
+
+CONTRACTS = {
+    "atlas_context": "1.0",
+    "release_manifest": "1.0",
+    "benchmark_candidate": "1.0",
 }
