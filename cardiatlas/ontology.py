@@ -21,8 +21,11 @@ CONCEPTS: tuple[Concept, ...] = (
     Concept("cell:macrophage", "cardiac macrophage", "cell_type", ("macrophage", "macrophages")),
     Concept("cell:pericyte", "pericyte", "cell_type"),
     Concept("cell:smooth_muscle", "vascular smooth muscle cell", "cell_type", ("smooth muscle cell",)),
-    Concept("cell:t_cell", "T cell", "cell_type", ("T lymphocyte",)),
-    Concept("cell:b_cell", "B cell", "cell_type", ("B lymphocyte",)),
+    Concept("cell:t_cell", "T cell", "cell_type", ("T lymphocyte",), "cell:immune"),
+    Concept("cell:b_cell", "B cell", "cell_type", ("B lymphocyte",), "cell:immune"),
+    Concept("cell:immune", "immune cell", "cell_type", ("immune cells",)),
+    Concept("cell:epicardial", "epicardial cell", "cell_type", ("epicardial cells",)),
+    Concept("cell:neural", "cardiac neural cell", "cell_type", ("neural cell",)),
     Concept("state:mature", "mature", "cell_state", ("maturation", "mature cardiac")),
     Concept("state:immature", "immature", "cell_state", ("immaturity", "fetal-like")),
     Concept("state:hypertrophic", "hypertrophic", "cell_state", ("hypertrophy",)),
@@ -30,6 +33,9 @@ CONCEPTS: tuple[Concept, ...] = (
     Concept("state:inflammatory", "inflammatory", "cell_state", ("inflamed", "inflammation-associated")),
     Concept("state:proliferative", "proliferative", "cell_state", ("cycling", "cell cycle-high")),
     Concept("state:stressed", "stressed", "cell_state", ("cellular stress",)),
+    Concept("state:hypoxic", "hypoxic", "cell_state", ("hypoxia-associated",)),
+    Concept("state:senescent", "senescent", "cell_state", ("cellular senescence",)),
+    Concept("phenotype:reference", "reference cardiac state", "phenotype", ("sham", "control", "healthy")),
     Concept("phenotype:myocardial_infarction", "myocardial infarction", "phenotype", ("MI", "myocardial injury", "infarction")),
     Concept("phenotype:fibrosis", "cardiac fibrosis", "phenotype", ("fibrosis", "fibrotic remodeling")),
     Concept("phenotype:ischemia_reperfusion", "ischemia-reperfusion injury", "phenotype", ("I/R injury", "ischemia reperfusion")),
@@ -37,11 +43,18 @@ CONCEPTS: tuple[Concept, ...] = (
     Concept("phenotype:regeneration", "cardiac regeneration", "phenotype", ("regenerative response",)),
     Concept("phenotype:arrhythmia", "cardiac arrhythmia", "phenotype", ("arrhythmia", "rhythm disorder")),
     Concept("phenotype:heart_failure", "heart failure", "phenotype", ("HF",)),
+    Concept("phenotype:hypertrophy", "cardiac hypertrophy", "phenotype", ("hypertrophy",)),
+    Concept("phenotype:vascular_injury", "cardiac vascular injury", "phenotype", ("vascular injury",)),
+    Concept("phenotype:oxidative_stress", "cardiac oxidative stress", "phenotype", ("oxidative stress",)),
+    Concept("phenotype:mitochondrial_dysfunction", "mitochondrial dysfunction", "phenotype", ("mitochondrial stress",)),
+    Concept("phenotype:electrical_instability", "electrical instability", "phenotype", ("electrophysiologic instability",)),
     Concept("process:maturation", "cardiac maturation", "process", ("cardiomyocyte maturation",)),
     Concept("process:remodeling", "cardiac remodeling", "process", ("remodelling",)),
     Concept("process:electrophysiology", "cardiac electrophysiology", "process", ("electrophysiology", "electrical activity")),
     Concept("process:angiogenesis", "angiogenesis", "process", ("vascular growth",)),
     Concept("process:extracellular_matrix_remodeling", "extracellular matrix remodeling", "process", ("ECM remodeling",)),
+    Concept("process:inflammation", "inflammatory signaling", "process", ("immune signaling",)),
+    Concept("process:regeneration", "cardiac regenerative process", "process", ("regenerative biology",)),
 )
 
 _INDEX: dict[str, Concept] = {
@@ -69,3 +82,12 @@ def concept_terms(concept_id: str) -> tuple[str, ...]:
 
 def concepts_by_category(category: str) -> list[Concept]:
     return [item for item in CONCEPTS if item.category == category]
+
+
+def descendants(concept_id: str) -> list[Concept]:
+    direct = [item for item in CONCEPTS if item.parent_id == concept_id]
+    result: list[Concept] = []
+    for item in direct:
+        result.append(item)
+        result.extend(descendants(item.id))
+    return result
