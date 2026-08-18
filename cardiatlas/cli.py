@@ -9,6 +9,7 @@ from pathlib import Path
 from .acquisition import acquisition_plan
 from .adapters import geo_summary_to_dataset, pubmed_summary_to_evidence
 from .build import build_reference
+from .corpus import corpus_report
 from .corpus_promote import promote_harvest
 from .harvest_manifest import create_harvest_manifest
 from .harvest_store import write_harvest
@@ -71,6 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
     reconstruct.add_argument("dataset", help="JSON file containing one DatasetRecord")
     reconstruct.add_argument("metadata", help="sample metadata as CSV, JSON, or JSONL")
     reconstruct.add_argument("--output", required=True, help="output directory for study, samples, and reconstruction report")
+    corpus = sub.add_parser("corpus", help="report the current in-memory corpus")
     resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
     resolve.add_argument("term")
     identifier = sub.add_parser("identifier", help="resolve a gene symbol, accession, or PMID")
@@ -90,6 +92,10 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     service = AtlasService.empty()
+
+    if args.command == "corpus":
+        print(json.dumps(corpus_report(service.registry.all()).to_dict(), indent=2, sort_keys=True))
+        return 0
 
     if args.command == "resolve":
         concept = resolve_concept(args.term)
