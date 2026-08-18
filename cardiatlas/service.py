@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Mapping, Iterable
 
 from .claims import Claim, ClaimAssessment, ClaimStore
 from .contracts import AtlasContext
 from .corpus import CorpusReport, corpus_report
 from .evidence import evidence_for, score_evidence
+from .geo_reconstruct import ReconstructionReport, reconstruct_samples, reconstruct_study
 from .graph import AtlasGraph, Relation
 from .identifiers import IdentifierResolution, resolve as resolve_identifier
 from .models import DatasetRecord, EvidenceRecord, Record, SampleRecord, StudyRecord
@@ -82,6 +84,36 @@ class AtlasService:
             "neighbors": self.graph.neighbors(record_id),
             "relations": [r.to_dict() for r in self.graph.subgraph(record_id, hops=1)],
         }
+
+    def reconstruct_samples(
+        self,
+        rows: Iterable[Mapping[str, object]],
+        *,
+        dataset_id: str,
+        study_id: str,
+    ) -> tuple[list[SampleRecord], ReconstructionReport]:
+        samples, report = reconstruct_samples(rows, dataset_id=dataset_id, study_id=study_id)
+        self.add_many(samples)
+        return samples, report
+
+    def reconstruct_study(
+        self,
+        dataset_id: str,
+        rows: Iterable[Mapping[str, object]],
+    ) -> tuple[StudyRecord, list[SampleRecord], ReconstructionReport]:
+        dataset = self.registry.get(dataset_id)
+        if dataset is None:
+            raise KeyError(dataset_id)
+        if not isinstance(dataset, DatasetRecord):
+            raise TypeError(f"{dataset_id} is not a dataset")
+        study, samples, report = reconstruct_study(dataset, rows)
+        self.add(study)
+        self.add_many(samples)
+        self.relate(dataset.id, "has_study", study.id, confidence=1.0, source="cardiatlas:geo-reconstruction")
+        for sample in samples:
+            self.relate(study.id, "has_sample", sample.id, confidence=1.0, source="cardiatlas:geo-reconstruction")
+            self.relate(dataset.id, "has_sample", sample.id, confidence=1.0, source="cardiatlas:geo-reconstruction")
+        return study, samples, report
 
     def assess_dataset(self, dataset_id: str) -> dict[str, object]:
         record = self.registry.get(dataset_id)
