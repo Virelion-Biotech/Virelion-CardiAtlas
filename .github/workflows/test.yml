@@ -26,7 +26,7 @@ jobs:
         run: |
           cardiatlas ontology --category phenotype > /tmp/phenotypes.json
           cardiatlas identifier TNNT2 > /tmp/identifier.json
-          cardiatlas plan --domain myocardial_infarction > /tmp/plan.json
+          cardiatlas harvest --domain myocardial_infarction --plan-only > /tmp/plan.json
           cardiatlas corpus > /tmp/corpus.json
           python -m json.tool /tmp/phenotypes.json >/dev/null
           python -m json.tool /tmp/identifier.json >/dev/null
@@ -34,3 +34,17 @@ jobs:
           python -m json.tool /tmp/corpus.json >/dev/null
       - name: Build checked-in reference Atlas
         run: cardiatlas build-reference --version "ci"
+      - name: Exercise GEO reconstruction CLI
+        run: |
+          cat > /tmp/dataset.json <<'EOF'
+          {"id":"dataset:GSETEST","record_type":"dataset","name":"GSETEST","accession":"GSETEST","repository":"GEO","study_title":"CI cardiac study","organism":"Sus scrofa","tissue":"heart","schema_version":"0.3"}
+          EOF
+          cat > /tmp/samples.csv <<'EOF'
+          accession,group,subject_id,timepoint,modality,region
+          GSMTEST1,MI,pig-1,P35,snRNA-seq,infarct
+          GSMTEST2,sham,pig-2,P35,snRNA-seq,remote
+          EOF
+          cardiatlas reconstruct-study /tmp/dataset.json /tmp/samples.csv --output /tmp/reconstructed
+          test -s /tmp/reconstructed/study.json
+          test -s /tmp/reconstructed/samples.jsonl
+          test -s /tmp/reconstructed/report.json
