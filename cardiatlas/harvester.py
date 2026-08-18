@@ -21,6 +21,8 @@ class HarvestBatch:
         return {
             "target_id": self.target_id,
             "record_count": len(self.records),
+            "item_count": len(self.items),
+            "records": [record.to_dict() for record in self.records],
             "items": [item.to_dict() for item in self.items],
         }
 
@@ -38,30 +40,41 @@ def _target_item(target: AcquisitionTarget, external_id: str, title: str, source
     )
 
 
+def _deduplicate_records(records: Iterable[Record]) -> list[Record]:
+    seen: set[str] = set()
+    result: list[Record] = []
+    for record in records:
+        if record.id in seen:
+            continue
+        seen.add(record.id)
+        result.append(record)
+    return result
+
+
 def harvest_target(client: NcbiClient, target: AcquisitionTarget, limit: int = 20) -> HarvestBatch:
+    records: list[Record] = []
+    items: list[HarvestItem] = []
     if target.source == "pubmed":
         result = client.search_pubmed(target.query, limit)
-        records: list[Record] = []
-        items: list[HarvestItem] = []
         for uid, summary in result["summaries"].items():
             if uid == "uids":
                 continue
             record = pubmed_summary_to_evidence(summary)
+            record.tags = list(dict.fromkeys([*record.tags, target.domain]))
             records.append(record)
             items.append(_target_item(target, str(uid), record.name, record.source_url, summary))
-        return HarvestBatch(target.target_id, tuple(records), tuple(deduplicate_harvest(items)))
-    if target.source == "geo":
+    elif target.source == "geo":
         result = client.search_geo(target.query, limit)
-        records = []
-        items = []
         for uid, summary in result["summaries"].items():
             if uid == "uids":
                 continue
             record = geo_summary_to_dataset(summary)
+            record.tags = list(dict.fromkeys([*record.tags, target.domain]))
             records.append(record)
             items.append(_target_item(target, str(uid), record.name, record.source_url, summary))
-        return HarvestBatch(target.target_id, tuple(records), tuple(deduplicate_harvest(items)))
-    raise ValueError(f"unsupported acquisition source: {target.source}")
+    else:
+        raise ValueError(f"unsupported acquisition source: {target.source}")
+    return HarvestBatch(target.target_id, tuple(_deduplicate_records(records)), tuple(deduplicate_harvest(items)))
 
 
 def harvest_plan(
