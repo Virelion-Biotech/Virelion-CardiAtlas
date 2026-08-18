@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Virelion-Biotech/Virelion-CardiAtlas/schemas/atlas_context.schema.json",
+  "title": "CardiAtlas Context",
+  "type": "object",
+  "required": ["context_id", "contract_version"],
+  "properties": {
+    "context_id": {"type": "string", "minLength": 1},
+    "contract_version": {"const": "1.0"},
+    "phenotype_ids": {"type": "array", "items": {"type": "string"}},
+    "cell_state_ids": {"type": "array", "items": {"type": "string"}},
+    "marker_ids": {"type": "array", "items": {"type": "string"}},
+    "dataset_ids": {"type": "array", "items": {"type": "string"}},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}},
+    "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "provenance": {"type": "array", "items": {"type": "string"}},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": true
+}
