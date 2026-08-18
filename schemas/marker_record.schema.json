@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/marker_record.schema.json",
+  "title": "CardiAtlas Marker Record",
+  "type": "object",
+  "required": ["id", "record_type", "name", "entity_id", "entity_type"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "record_type": {"const": "marker"},
+    "name": {"type": "string", "minLength": 1},
+    "description": {"type": "string"},
+    "entity_id": {"type": "string"},
+    "entity_type": {"enum": ["gene", "protein", "metabolite", "feature"]},
+    "role": {"type": "string"},
+    "cell_types": {"type": "array", "items": {"type": "string"}},
+    "states": {"type": "array", "items": {"type": "string"}},
+    "direction": {"enum": ["up", "down", "context_dependent", "unknown"]},
+    "modalities": {"type": "array", "items": {"type": "string"}},
+    "species": {"type": "array", "items": {"type": "string"}},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}},
+    "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+  }
+}
