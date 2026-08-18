@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Mapping, Iterable
+from typing import Iterable, Mapping
 
 from .harmonize import harmonize_condition, harmonize_modality
 from .models import DatasetRecord, SampleRecord, StudyRecord
@@ -64,9 +64,6 @@ def _first(row: Mapping[str, object], keys: tuple[str, ...]) -> tuple[str, str]:
 
 
 def _subject_from_accession(accession: str) -> str | None:
-    # Only use explicit accession-derived grouping when the pattern contains a
-    # visible biological replicate marker. Never invent subject identity from
-    # arbitrary sample numbers.
     match = re.search(r"(?:animal|donor|subject|mouse|rat|pig|human)[_-]?[A-Za-z0-9]+", accession, re.I)
     return match.group(0) if match else None
 
@@ -91,7 +88,7 @@ def reconstruct_samples(
         if condition and condition.normalized:
             decisions.append(ReconstructionDecision("condition", raw_condition, condition.normalized, condition.confidence, condition_key))
 
-        raw_modality, modality_key = _first(row, ("modality", "assay", "platform", "library_type"))
+        raw_modality, modality_key = _first(row, ("modality", "library_strategy", "assay", "platform", "library_type"))
         modality = harmonize_modality(raw_modality) if raw_modality else harmonize_modality("other")
         decisions.append(ReconstructionDecision("modality", raw_modality or "other", modality.normalized, modality.confidence, modality_key or "default"))
 
