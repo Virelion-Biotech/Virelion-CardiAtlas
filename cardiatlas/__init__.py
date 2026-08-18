@@ -43,10 +43,10 @@ __all__ = [
     "build_reference", "canonical_concept_id", "canonical_key", "concepts_by_category", "context_from_dict", "corpus_report",
     "create_manifest", "dataset_to_benchmark_candidate", "descendants", "diff_records", "digest_records", "graph_context",
     "group_datasets", "harmonize_condition", "harmonize_label", "harmonize_modality", "ingest_sample_rows", "ingest_source",
-    "load_into_registry", "migrate_payload", "migrate_records", "namespace", "neighborhood_retrieve", "normalize_accession",
-    "normalize_gene_symbol", "normalize_label", "normalize_species", "plan_as_dict", "populate_registry", "query_registry",
-    "read_bundle", "record_from_dict", "resolve_concept", "resolve_identifier", "retrieve", "sample_from_metadata",
-    "score_evidence", "study_from_datasets", "verify_digest", "write_cardiBench_candidates", "write_records", "write_release",
+    "load_into_registry", "migrate_payload", "migrate_records", "neighborhood_retrieve", "normalize_accession", "normalize_gene_symbol",
+    "normalize_label", "normalize_species", "plan_as_dict", "populate_registry", "query_registry", "read_bundle", "record_from_dict",
+    "resolve_concept", "resolve_identifier", "retrieve", "sample_from_metadata", "score_evidence", "study_from_datasets", "verify_digest",
+    "write_cardiBench_candidates", "write_records", "write_release",
 ]
 
 __version__ = "0.5.0"
