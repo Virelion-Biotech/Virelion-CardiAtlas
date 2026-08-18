@@ -5,7 +5,7 @@
   "required": ["subject", "predicate", "object"],
   "properties": {
     "subject": {"type": "string", "minLength": 1},
-    "predicate": {"type": "string", "minLength": 1},
+    "predicate": {"enum": ["supports", "refutes", "mixed_evidence_for", "expressed_in", "marks", "associated_with", "observed_in", "involves", "derived_from", "part_of", "has_sample", "has_dataset", "uses_modality", "occurs_in", "precedes", "responds_to", "measures"]},
     "object": {"type": "string", "minLength": 1},
     "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
     "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
