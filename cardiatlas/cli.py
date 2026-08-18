@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import sys
+from pathlib import Path
 
 from .acquisition import acquisition_plan
 from .adapters import geo_summary_to_dataset, pubmed_summary_to_evidence
@@ -12,11 +14,39 @@ from .harvest_manifest import create_harvest_manifest
 from .harvest_store import write_harvest
 from .harvester import harvest_plan
 from .identifiers import resolve as resolve_identifier
-from .models import EvidenceRecord
+from .models import DatasetRecord, EvidenceRecord
 from .ncbi import NcbiClient
 from .ontology import concepts_by_category, resolve_concept
 from .release_checks import assess_release
 from .service import AtlasService
+
+
+def _concept_payload(concept):
+    return {"id": concept.id, "label": concept.label, "category": concept.category, "synonyms": list(concept.synonyms), "parent_id": concept.parent_id}
+
+
+def _read_metadata(path: str) -> list[dict[str, object]]:
+    source = Path(path)
+    if source.suffix.lower() == ".jsonl":
+        rows: list[dict[str, object]] = []
+        with source.open("r", encoding="utf-8") as handle:
+            for line_number, line in enumerate(handle, 1):
+                if not line.strip():
+                    continue
+                payload = json.loads(line)
+                if not isinstance(payload, dict):
+                    raise ValueError(f"JSONL row {line_number} is not an object")
+                rows.append(payload)
+        return rows
+    if source.suffix.lower() == ".json":
+        payload = json.loads(source.read_text(encoding="utf-8"))
+        if not isinstance(payload, list) or not all(isinstance(item, dict) for item in payload):
+            raise ValueError("JSON metadata must contain an array of objects")
+        return payload
+    if source.suffix.lower() == ".csv":
+        with source.open("r", encoding="utf-8", newline="") as handle:
+            return [dict(row) for row in csv.DictReader(handle)]
+    raise ValueError("metadata input must be .json, .jsonl, or .csv")
 
 
 def _concept_payload(concept):
@@ -40,6 +70,10 @@ def build_parser() -> argparse.ArgumentParser:
     promote = sub.add_parser("promote-harvest", help="promote a harvested artifact into an Atlas candidate corpus")
     promote.add_argument("input")
     promote.add_argument("--output", required=True)
+    reconstruct = sub.add_parser("reconstruct-study", help="reconstruct a GEO study and samples from tabular metadata")
+    reconstruct.add_argument("dataset", help="JSON dataset record file containing one DatasetRecord object")
+    reconstruct.add_argument("metadata", help="sample metadata as CSV, JSON, or JSONL")
+    reconstruct.add_argument("--output", required=True, help="output directory for study, samples, and reconstruction report")
     resolve = sub.add_parser("resolve", help="resolve a cardiac term to a canonical Atlas concept")
     resolve.add_argument("term")
     identifier = sub.add_parser("identifier", help="resolve a gene symbol, accession, or PMID")
@@ -92,6 +126,23 @@ def main(argv: list[str] | None = None) -> int:
         report = promote_harvest(args.input, args.output)
         print(json.dumps(report, indent=2, sort_keys=True))
         return 0 if report["rejected_record_count"] == 0 else 1
+
+    if args.command == "reconstruct-study":
+        payload = json.loads(Path(args.dataset).read_text(encoding="utf-8"))
+        dataset = DatasetRecord(**payload)
+        rows = _read_metadata(args.metadata)
+        study, samples, report = service.reconstruct_study(dataset.id, rows) if False else (None, None, None)
+        service.add(dataset)
+        study, samples, report = service.reconstruct_study(dataset.id, rows)
+        target = Path(args.output)
+        target.mkdir(parents=True, exist_ok=True)
+        (target / "study.json").write_text(json.dumps(study.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        with (target / "samples.jsonl").open("w", encoding="utf-8") as handle:
+            for sample in samples:
+                handle.write(json.dumps(sample.to_dict(), sort_keys=True) + "\n")
+        (target / "report.json").write_text(json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+        return 0 if not report.warnings else 0
 
     if args.command == "harvest":
         targets = acquisition_plan(args.domain)
