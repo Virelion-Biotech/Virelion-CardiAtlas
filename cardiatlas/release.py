@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from typing import Iterable
 
 from .models import Record
+from .schema import SCHEMA_VERSION
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,7 +40,7 @@ def digest_records(records: Iterable[Record]) -> str:
     return hashlib.sha256(canonical_payload(records)).hexdigest()
 
 
-def create_manifest(records: Iterable[Record], version: str, schema_version: str = "0.2") -> ReleaseManifest:
+def create_manifest(records: Iterable[Record], version: str, schema_version: str = SCHEMA_VERSION) -> ReleaseManifest:
     materialized = list(records)
     counts: dict[str, int] = {}
     for record in materialized:
