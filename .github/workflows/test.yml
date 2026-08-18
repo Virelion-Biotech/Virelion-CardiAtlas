@@ -18,5 +18,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install package and test dependencies
         run: python -m pip install --upgrade pip && pip install -e '.[test]'
+      - name: Compile package
+        run: python -m compileall -q cardiatlas tests
       - name: Run tests
         run: pytest -q
+      - name: Smoke-test CLI
+        run: |
+          cardiatlas ontology --category phenotype > /tmp/phenotypes.json
+          cardiatlas identifier TNNT2 > /tmp/identifier.json
+          python -m json.tool /tmp/phenotypes.json >/dev/null
+          python -m json.tool /tmp/identifier.json >/dev/null
