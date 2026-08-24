@@ -40,6 +40,7 @@ from .service import AtlasService
 from .sources import SourceResult, ingest_source
 from .sqlite import SQLiteAtlasStore
 from .studies import StudyQC, assess_study, study_from_datasets
+from .study_readiness import StudyBenchmarkReadiness, assess_study_benchmark_readiness
 
 __all__ = [
     "AcquisitionTarget", "AtlasAPI", "AtlasContext", "AtlasGraph", "AtlasRecord", "AtlasRegistry", "AtlasService",
@@ -47,8 +48,8 @@ __all__ = [
     "CorpusReport", "DatasetRecord", "EvidenceRecord", "EvidenceScore", "GeoReconstructionBundle", "GeoSoftSample", "HarvestBatch", "HarvestItem", "HarvestManifest", "HarvestQC", "HarmonizedValue", "IdentifierResolution",
     "InterventionRecord", "MarkerRecord", "PhenotypeRecord", "PromotionDecision", "ProvenanceBundle", "ProvenanceEvent", "Query", "QueryHit",
     "QualityReport", "ReconstructionDecision", "ReconstructionReport", "ReferenceBuild", "Relation", "ReleaseCheck", "ReleaseManifest", "ReleaseReadiness", "RetrievalResult",
-    "SampleRecord", "SnapshotDiff", "SourceResult", "SQLiteAtlasStore", "StudyQC", "StudyRecord", "acquisition_plan",
-    "assess_dataset", "assess_harvest", "assess_release", "assess_study", "attach_datasets", "audit_datasets", "benchmark_readiness", "build_reference",
+    "SampleRecord", "SnapshotDiff", "SourceResult", "SQLiteAtlasStore", "StudyBenchmarkReadiness", "StudyQC", "StudyRecord", "acquisition_plan",
+    "assess_dataset", "assess_harvest", "assess_release", "assess_study", "assess_study_benchmark_readiness", "attach_datasets", "audit_datasets", "benchmark_readiness", "build_reference",
     "canonical_concept_id", "canonical_digest", "canonical_key", "concepts_by_category", "context_from_dict", "corpus_report", "create_harvest_manifest", "create_manifest",
     "dataset_to_benchmark_candidate", "decide_promotion", "deduplicate_harvest", "descendants", "diff_records", "digest_records", "graph_context", "group_datasets",
     "harvest_plan", "harvest_report", "harvest_target", "harmonize_condition", "harmonize_label", "harmonize_modality", "ingest_sample_rows",
@@ -58,4 +59,4 @@ __all__ = [
     "write_cardiBench_candidates", "write_records", "write_release",
 ]
 
-__version__ = "0.5.3"
+__version__ = "0.5.4"
