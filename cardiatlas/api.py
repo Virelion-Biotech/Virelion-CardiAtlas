@@ -4,8 +4,6 @@ from collections.abc import Iterable, Mapping
 
 from .contracts import AtlasContext
 from .corpus import corpus_report
-from .geo_reconstruct import ReconstructionReport
-from .models import SampleRecord, StudyRecord
 from .query import Query
 from .retrieval import neighborhood_retrieve, retrieve
 from .service import AtlasService
@@ -46,17 +44,16 @@ class AtlasAPI:
             "results": neighborhood_retrieve(self.service.registry, self.service.graph, text, hops=hops, limit=limit),
         }
 
-    def reconstruct_study(
-        self,
-        dataset_id: str,
-        rows: Iterable[Mapping[str, object]],
-    ) -> dict[str, object]:
+    def reconstruct_study(self, dataset_id: str, rows: Iterable[Mapping[str, object]]) -> dict[str, object]:
         study, samples, report = self.service.reconstruct_study(dataset_id, rows)
         return {
             "study": study.to_dict(),
             "samples": [sample.to_dict() for sample in samples],
             "report": report.to_dict(),
         }
+
+    def study_benchmark_readiness(self, study_id: str, dataset_id: str) -> dict[str, object]:
+        return self.service.assess_study_benchmark_readiness(study_id, dataset_id).to_dict()
 
     def resolve(self, value: str) -> dict[str, object]:
         concept = self.service.concept(value)
