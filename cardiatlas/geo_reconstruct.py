@@ -68,6 +68,16 @@ def _subject_from_accession(accession: str) -> str | None:
     return match.group(0) if match else None
 
 
+def _null_like(value: str) -> bool:
+    return value.strip().lower() in {"", "-", "/", "missing", "n/a", "na", "none", "not applicable", "null"}
+
+
+def _modality_value(row: Mapping[str, object]) -> tuple[str, str]:
+    # GEO explicitly defines library strategy as the sequencing strategy field;
+    # prefer it over platform labels because a platform can host multiple assays.
+    return _first(row, ("modality", "library_strategy", "assay", "library_type", "platform"))
+
+
 def reconstruct_samples(
     rows: Iterable[Mapping[str, object]],
     *,
@@ -84,27 +94,31 @@ def reconstruct_samples(
             raise ValueError("GEO sample metadata requires an accession")
 
         raw_condition, condition_key = _first(row, ("condition", "group", "phenotype", "disease", "treatment"))
-        condition = harmonize_condition(raw_condition) if raw_condition else None
+        condition = None if _null_like(raw_condition) else harmonize_condition(raw_condition)
         if condition and condition.normalized:
             decisions.append(ReconstructionDecision("condition", raw_condition, condition.normalized, condition.confidence, condition_key))
 
-        raw_modality, modality_key = _first(row, ("modality", "library_strategy", "assay", "platform", "library_type"))
-        modality = harmonize_modality(raw_modality) if raw_modality else harmonize_modality("other")
-        decisions.append(ReconstructionDecision("modality", raw_modality or "other", modality.normalized, modality.confidence, modality_key or "default"))
+        raw_modality, modality_key = _modality_value(row)
+        if _null_like(raw_modality):
+            raw_modality, modality_key = "other", "default"
+        modality = harmonize_modality(raw_modality)
+        decisions.append(ReconstructionDecision("modality", raw_modality, modality.normalized, modality.confidence, modality_key))
 
         raw_subject, subject_key = _first(row, ("subject_id", "donor_id", "animal_id", "individual_id", "patient_id"))
-        subject = raw_subject or _subject_from_accession(accession)
+        subject = None if _null_like(raw_subject) else raw_subject
+        if subject is None:
+            subject = _subject_from_accession(accession)
         if subject:
-            decisions.append(ReconstructionDecision("subject_id", raw_subject or accession, subject, 0.99 if raw_subject else 0.55, subject_key or "accession_pattern"))
+            decisions.append(ReconstructionDecision("subject_id", raw_subject or accession, subject, 0.99 if subject_key else 0.55, subject_key or "accession_pattern"))
 
         region, region_key = _first(row, ("region", "heart_region", "tissue_region", "anatomical_region", "zone"))
-        timepoint, timepoint_key = _first(row, ("timepoint", "time_point", "post_injury", "dpi", "day", "days_post_injury"))
+        timepoint, timepoint_key = _first(row, ("timepoint", "time_point", "post_injury", "post_infarction", "dpi", "day", "days_post_injury", "days_post_infarction"))
         species, species_key = _first(row, ("species", "organism"))
         tissue, tissue_key = _first(row, ("tissue", "source_tissue", "sample_source"))
         cell_context, cell_key = _first(row, ("cell_context", "cell_type", "cell", "nucleus_type"))
         replicate, replicate_key = _first(row, ("replicate_group", "biological_replicate", "replicate", "animal"))
 
-        normalized_condition = condition.normalized if condition else raw_condition
+        normalized_condition = condition.normalized if condition else ("" if _null_like(raw_condition) else raw_condition)
         record = SampleRecord(
             id=f"sample:{canonical_key(accession)}",
             name=str(row.get("name") or accession),
@@ -112,15 +126,15 @@ def reconstruct_samples(
             dataset_id=dataset_id,
             study_id=study_id,
             subject_id=subject,
-            replicate_group=replicate or None,
+            replicate_group=None if _null_like(replicate) else (replicate or None),
             species=normalize_species(species),
-            tissue=tissue,
-            region=region or None,
-            cell_context=cell_context or None,
+            tissue="" if _null_like(tissue) else tissue,
+            region=None if _null_like(region) else (region or None),
+            cell_context=None if _null_like(cell_context) else (cell_context or None),
             condition=normalized_condition,
-            timepoint=timepoint or None,
+            timepoint=None if _null_like(timepoint) else (timepoint or None),
             modality=modality.normalized if modality.normalized in {"bulk_rna", "scrna", "snrna", "proteomics", "imaging", "ecg", "physiology", "clinical", "literature", "other"} else "other",
-            is_technical_replicate=str(row.get("is_technical_replicate", "")).lower() in {"1", "true", "yes"},
+            is_technical_replicate=str(row.get("is_technical_replicate", "")).strip().lower() in {"1", "true", "yes"},
             metadata_quality="reconstructed",
             metadata={
                 "source_keys": {
@@ -148,6 +162,8 @@ def reconstruct_samples(
         warnings.append("some samples lack timepoint metadata")
     if any(not item.subject_id for item in records):
         warnings.append("some samples lack subject identifiers; subject-aware leakage control may be limited")
+    if any(item.modality == "other" for item in records):
+        warnings.append("some samples lack an explicitly recognized modality")
 
     report = ReconstructionReport(
         dataset_id=dataset_id,
