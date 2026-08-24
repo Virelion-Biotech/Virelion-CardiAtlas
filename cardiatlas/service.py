@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping, Iterable
+from typing import Iterable, Mapping
 
 from .claims import Claim, ClaimAssessment, ClaimStore
 from .contracts import AtlasContext
@@ -20,6 +20,7 @@ from .release_checks import ReleaseReadiness, assess_release
 from .retrieval import RetrievalResult, neighborhood_retrieve, retrieve
 from .search import search_records
 from .studies import StudyQC, assess_study
+from .study_readiness import StudyBenchmarkReadiness, assess_study_benchmark_readiness
 
 
 @dataclass(slots=True)
@@ -131,6 +132,16 @@ class AtlasService:
             raise TypeError(f"{study_id} is not a study")
         samples = [item for item in self.registry.all("sample") if isinstance(item, SampleRecord)]
         return assess_study(record, samples)
+
+    def assess_study_benchmark_readiness(self, study_id: str, dataset_id: str) -> StudyBenchmarkReadiness:
+        study = self.registry.get(study_id)
+        dataset = self.registry.get(dataset_id)
+        if not isinstance(study, StudyRecord):
+            raise TypeError(f"{study_id} is not a study")
+        if not isinstance(dataset, DatasetRecord):
+            raise TypeError(f"{dataset_id} is not a dataset")
+        samples = [item for item in self.registry.all("sample") if isinstance(item, SampleRecord) and item.study_id == study_id]
+        return assess_study_benchmark_readiness(study, dataset, samples)
 
     def assess_claim(self, claim_id: str) -> ClaimAssessment:
         evidence = {item.id: item for item in self.registry.all("evidence") if isinstance(item, EvidenceRecord)}
