@@ -32,7 +32,7 @@ def assess_study_benchmark_readiness(
     qc = assess_study(study, samples)
     conditions = {sample.condition for sample in samples if sample.condition}
     modalities = {sample.modality for sample in samples if sample.modality and sample.modality != "other"}
-    subjects = {sample.subject_id for sample in samples if sample.subject_id}
+    subjects = {sample.subject_id for sample in samples if sample.subject_id and not sample.metadata.get("subject_inferred", False)}
     checks = {
         "accession": bool(dataset.accession),
         "organism": bool(dataset.organism),
@@ -40,13 +40,13 @@ def assess_study_benchmark_readiness(
         "sample_count": qc.sample_count > 0,
         "multiple_conditions": len(conditions) >= 2,
         "recognized_modality": bool(modalities),
-        "subject_structure": bool(subjects),
+        "subject_structure": bool(subjects) and qc.missing_subject_ids == 0,
         "no_duplicate_sample_accessions": qc.duplicate_accessions == 0,
         "provenance": bool(dataset.evidence_ids or dataset.source_ids),
     }
     warnings = list(qc.warnings)
-    if len(subjects) < len(samples) and qc.sample_count > 0:
-        warnings.append("not every sample has an explicit biological subject identifier")
+    if qc.sample_count > 0 and qc.missing_subject_ids:
+        warnings.append("subject metadata is incomplete or heuristic and therefore cannot support leakage-control readiness")
     missing = tuple(key for key, passed in checks.items() if not passed)
     return StudyBenchmarkReadiness(
         study_id=study.id,
