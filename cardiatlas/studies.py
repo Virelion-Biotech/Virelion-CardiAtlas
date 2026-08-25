@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass
 
 from .models import DatasetRecord, SampleRecord, StudyRecord
@@ -57,18 +57,25 @@ def study_from_datasets(study_id: str, datasets: list[DatasetRecord], name: str 
     )
 
 
+def _has_explicit_subject(sample: SampleRecord) -> bool:
+    """Return whether the subject identifier came from sample metadata rather than a heuristic."""
+    if not sample.subject_id:
+        return False
+    return not bool(sample.metadata.get("subject_inferred", False))
+
+
 def assess_study(study: StudyRecord, samples: list[SampleRecord]) -> StudyQC:
     scoped = [sample for sample in samples if sample.study_id == study.id]
     accessions = [sample.accession for sample in scoped if sample.accession]
-    subjects = {sample.subject_id for sample in scoped if sample.subject_id}
+    subjects = {sample.subject_id for sample in scoped if _has_explicit_subject(sample)}
     duplicate_accessions = sum(count - 1 for count in Counter(accessions).values() if count > 1)
     technical = sum(1 for sample in scoped if sample.is_technical_replicate)
-    missing_subject = sum(1 for sample in scoped if not sample.subject_id)
+    missing_subject = sum(1 for sample in scoped if not _has_explicit_subject(sample))
     missing_condition = sum(1 for sample in scoped if not sample.condition)
     missing_timepoint = sum(1 for sample in scoped if not sample.timepoint)
     warnings: list[str] = []
     if missing_subject:
-        warnings.append("some samples lack biological subject identifiers; leakage control may be limited")
+        warnings.append("some samples lack explicit biological subject identifiers; inferred/accession-derived IDs are not accepted for leakage control")
     if duplicate_accessions:
         warnings.append("duplicate sample accessions detected")
     if missing_condition:
