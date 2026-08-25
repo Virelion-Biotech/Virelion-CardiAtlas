@@ -1,0 +1,42 @@
+name: GEO live smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  reconstruct-gse153480:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: python -m pip install --upgrade pip && python -m pip install -e .
+      - name: Reconstruct live GEO study
+        run: |
+          rm -rf /tmp/cardiatlas-geo
+          python -m cardiatlas.cli reconstruct-geo GSE153480 --output /tmp/cardiatlas-geo
+          test -s /tmp/cardiatlas-geo/dataset.json
+          test -s /tmp/cardiatlas-geo/study.json
+          test -s /tmp/cardiatlas-geo/samples.jsonl
+          test -s /tmp/cardiatlas-geo/report.json
+      - name: Validate reconstructed sample count
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('/tmp/cardiatlas-geo/samples.jsonl')
+          rows = [json.loads(line) for line in p.read_text().splitlines() if line.strip()]
+          assert len(rows) == 8, f'expected 8 GEO samples, got {len(rows)}'
+          assert {r.get('condition') for r in rows} >= {'MI', 'sham'}, 'MI/sham labels were not reconstructed'
+          print(f'validated {len(rows)} reconstructed samples')
+          PY
+      - name: Upload reconstruction artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: geo-gse153480-reconstruction
+          path: /tmp/cardiatlas-geo/
