@@ -1,0 +1,73 @@
+release_id: geo-mi-vs-sham-2026-08-25
+status: source-audited
+source: NCBI GEO
+purpose: "Initial public-data acquisition set for CardiBench MI-vs-sham work."
+
+records:
+  - accession: GSE153480
+    title: "Single cell RNA-seq of neonatal heart regeneration"
+    organism: Mus musculus
+    assay: scRNA-seq
+    samples: 8
+    conditions: [MI, sham]
+    timepoints: [1d, 3d]
+    developmental_strata: [P1, P8]
+    processed_data: true
+    raw_archive: GSE153480_RAW.tar
+    raw_archive_size_mb: 117.4
+    priority: primary
+    notes: "Best initial within-study candidate; preserve P1/P8 and timepoint strata."
+
+  - accession: GSE135310
+    title: "Time series single cell transcriptomics of cardiac inflammation after myocardial infarction in mice"
+    organism: Mus musculus
+    assay: scRNA-seq/CITE-seq
+    samples: 7
+    conditions: [MI, sham]
+    timepoints: [steady_state, 1d, 3d, 5d]
+    processed_data: true
+    raw_archive: GSE135310_RAW.tar
+    raw_archive_size_gb: 2.1
+    priority: secondary
+    notes: "Use for immune-cell/context and temporal evaluation after pooled-library reconstruction."
+
+  - accession: GSE216211
+    title: "A subset of temporary resident cardiac macrophages induced by myocardial infarction limits adverse ventricular remodeling"
+    organism: Mus musculus
+    assay: scRNA-seq
+    samples: 3
+    conditions: [sham, MI, MI-E]
+    processed_data: true
+    raw_archive: GSE216211_RAW.tar
+    raw_archive_size_mb: 191.3
+    priority: external_validation
+    notes: "Only one GEO sample for Sham and one for MI; do not use as an independent biological-replicate training benchmark."
+
+  - accession: GSE106472
+    title: "IRF3 and type I interferons fuel a fatal response to myocardial infarction"
+    organism: Mus musculus
+    assay: inDrop scRNA-seq
+    samples: 3
+    conditions: [WT_D4_MI, IRF3KO_D4_MI, WT_no_MI]
+    processed_data: true
+    raw_archive: GSE106472_RAW.tar
+    raw_archive_size_mb: 10.7
+    priority: mechanistic_external
+    notes: "WT MI vs WT no-MI is usable as a narrow external contrast; IRF3KO must remain separate because genotype is a confounder."
+
+  - accession: GSE269054
+    title: "Spatially clustered type I interferon responses at injury borderzones"
+    organism: Mus musculus
+    assay: spatial_transcriptomics
+    priority: spatial_extension
+    processed_data: false
+    notes: "Keep as a separate spatial/zone-generalization task; do not merge directly with the initial scRNA-seq matrix."
+
+acceptance_rules:
+  - "No heuristic biological-subject identifiers."
+  - "No cell/nucleus split across biological partitions."
+  - "No technical-replicate split across partitions."
+  - "No I/R samples in the permanent-MI primary task."
+  - "No genotype perturbation in the sham/reference class."
+  - "Preserve anatomical zone, developmental stage, age and timepoint metadata."
+  - "Store source accession and exact file identity for every materialized artifact."
