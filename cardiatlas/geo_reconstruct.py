@@ -106,10 +106,14 @@ def reconstruct_samples(
 
         raw_subject, subject_key = _first(row, ("subject_id", "donor_id", "animal_id", "individual_id", "patient_id"))
         subject = None if _null_like(raw_subject) else raw_subject
+        subject_inferred = False
         if subject is None:
             subject = _subject_from_accession(accession)
+            subject_inferred = subject is not None
         if subject:
             decisions.append(ReconstructionDecision("subject_id", raw_subject or accession, subject, 0.99 if subject_key else 0.55, subject_key or "accession_pattern"))
+        if subject_inferred:
+            warnings.append(f"{accession}: subject ID was inferred from accession text and is not valid for leakage-control readiness")
 
         region, region_key = _first(row, ("region", "heart_region", "tissue_region", "anatomical_region", "zone"))
         timepoint, timepoint_key = _first(row, ("timepoint", "time_point", "post_injury", "post_infarction", "dpi", "day", "days_post_injury", "days_post_infarction"))
@@ -149,6 +153,7 @@ def reconstruct_samples(
                     "cell_context": cell_key,
                     "replicate": replicate_key,
                 },
+                "subject_inferred": subject_inferred,
                 "raw_metadata": dict(row),
             },
         )
@@ -169,12 +174,12 @@ def reconstruct_samples(
         dataset_id=dataset_id,
         study_id=study_id,
         sample_count=len(records),
-        reconstructed_subjects=len({item.subject_id for item in records if item.subject_id}),
+        reconstructed_subjects=len({item.subject_id for item in records if item.subject_id and not item.metadata.get("subject_inferred", False)}),
         condition_groups=tuple(sorted({item.condition for item in records if item.condition})),
         timepoints=tuple(sorted({item.timepoint for item in records if item.timepoint})),
         regions=tuple(sorted({item.region for item in records if item.region})),
         modalities=tuple(sorted({item.modality for item in records})),
-        warnings=tuple(warnings),
+        warnings=tuple(dict.fromkeys(warnings)),
         decisions=tuple(decisions),
     )
     return records, report
