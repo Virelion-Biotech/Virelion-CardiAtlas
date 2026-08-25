@@ -37,15 +37,21 @@ class NcbiClient:
         self._last_request = time.monotonic()
         return payload
 
-    def _geo_request(self, accession: str) -> bytes:
+    @staticmethod
+    def geo_family_soft_url(accession: str) -> str:
+        """Return the canonical NCBI FTP URL for a GEO Series family SOFT file."""
         accession = accession.strip().upper()
         if not re.fullmatch(r"GSE\d+", accession):
             raise ValueError(f"invalid GEO Series accession: {accession}")
         parent = accession[:-3] + "nnn" if len(accession) > 6 else accession
-        url = f"https://ftp.ncbi.nlm.nih.gov/geo/series/{parent}/{accession}/{accession}_family.soft.gz"
+        return f"https://ftp.ncbi.nlm.nih.gov/geo/series/{parent}/{accession}/{accession}_family.soft.gz"
+
+    def _geo_request(self, accession: str) -> bytes:
+        url = self.geo_family_soft_url(accession)
         request = urllib.request.Request(url, headers={"User-Agent": self.tool})
         with urllib.request.urlopen(request, timeout=self.timeout) as response:
             payload = response.read()
+        self._last_request = time.monotonic()
         return gzip.decompress(payload)
 
     def fetch_geo_family_soft(self, accession: str) -> bytes:
