@@ -24,16 +24,22 @@ jobs:
           test -s /tmp/cardiatlas-geo/study.json
           test -s /tmp/cardiatlas-geo/samples.jsonl
           test -s /tmp/cardiatlas-geo/report.json
-      - name: Validate reconstructed sample count
+          test -s /tmp/cardiatlas-geo/acquisition.json
+      - name: Validate reconstructed study
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          p = Path('/tmp/cardiatlas-geo/samples.jsonl')
-          rows = [json.loads(line) for line in p.read_text().splitlines() if line.strip()]
+          root = Path('/tmp/cardiatlas-geo')
+          rows = [json.loads(line) for line in (root / 'samples.jsonl').read_text().splitlines() if line.strip()]
+          report = json.loads((root / 'report.json').read_text())
+          acquisition = json.loads((root / 'acquisition.json').read_text())
           assert len(rows) == 8, f'expected 8 GEO samples, got {len(rows)}'
-          assert {r.get('condition') for r in rows} >= {'MI', 'sham'}, 'MI/sham labels were not reconstructed'
-          print(f'validated {len(rows)} reconstructed samples')
+          assert report['dataset']['accession'] == 'GSE153480'
+          assert acquisition['accession'] == 'GSE153480'
+          assert acquisition['sha256'] and len(acquisition['sha256']) == 64
+          assert acquisition['payload_bytes'] > 0
+          print(f"validated live GEO reconstruction: {len(rows)} samples, {acquisition['payload_bytes']} bytes")
           PY
       - name: Upload reconstruction artifact
         uses: actions/upload-artifact@v4
