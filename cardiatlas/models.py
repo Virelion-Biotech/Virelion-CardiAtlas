@@ -8,7 +8,6 @@ EvidencePolarity = Literal["supports", "refutes", "mixed", "unknown"]
 Modality = Literal["bulk_rna", "scrna", "snrna", "proteomics", "imaging", "ecg", "physiology", "clinical", "literature", "other"]
 Repository = Literal["GEO", "SRA", "ArrayExpress", "dbGaP", "other"]
 
-
 @dataclass(slots=True)
 class AtlasRecord:
     id: str
@@ -19,14 +18,10 @@ class AtlasRecord:
     tags: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     schema_version: str = "0.3"
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
+    def to_dict(self) -> dict[str, Any]: return asdict(self)
 
 @dataclass(slots=True)
 class EvidenceRecord(AtlasRecord):
-    record_type: str = "evidence"
     source_type: Literal["pubmed", "doi", "geo", "sra", "arrayexpress", "clinical", "other"] = "other"
     source_identifier: str = ""
     citation: str = ""
@@ -40,10 +35,8 @@ class EvidenceRecord(AtlasRecord):
     extracted_claim: str = ""
     context: dict[str, Any] = field(default_factory=dict)
 
-
 @dataclass(slots=True)
 class MarkerRecord(AtlasRecord):
-    record_type: str = "marker"
     entity_id: str = ""
     entity_type: Literal["gene", "protein", "metabolite", "feature"] = "gene"
     role: str = ""
@@ -55,10 +48,8 @@ class MarkerRecord(AtlasRecord):
     evidence_ids: list[str] = field(default_factory=list)
     confidence: float | None = None
 
-
 @dataclass(slots=True)
 class PhenotypeRecord(AtlasRecord):
-    record_type: str = "phenotype"
     category: str = ""
     synonyms: list[str] = field(default_factory=list)
     manifestations: list[str] = field(default_factory=list)
@@ -66,10 +57,8 @@ class PhenotypeRecord(AtlasRecord):
     associated_states: list[str] = field(default_factory=list)
     evidence_ids: list[str] = field(default_factory=list)
 
-
 @dataclass(slots=True)
 class CellStateRecord(AtlasRecord):
-    record_type: str = "cell_state"
     cell_type: str = ""
     state: str = ""
     parent_states: list[str] = field(default_factory=list)
@@ -79,10 +68,8 @@ class CellStateRecord(AtlasRecord):
     species: list[str] = field(default_factory=list)
     evidence_ids: list[str] = field(default_factory=list)
 
-
 @dataclass(slots=True)
 class DatasetRecord(AtlasRecord):
-    record_type: str = "dataset"
     accession: str = ""
     repository: Repository = "other"
     study_title: str = ""
@@ -101,10 +88,8 @@ class DatasetRecord(AtlasRecord):
     timepoints: list[str] = field(default_factory=list)
     quality_flags: list[str] = field(default_factory=list)
 
-
 @dataclass(slots=True)
 class StudyRecord(AtlasRecord):
-    record_type: str = "study"
     accession: str = ""
     repository: Repository = "other"
     title: str = ""
@@ -116,10 +101,8 @@ class StudyRecord(AtlasRecord):
     design: str = ""
     publication_ids: list[str] = field(default_factory=list)
 
-
 @dataclass(slots=True)
 class SampleRecord(AtlasRecord):
-    record_type: str = "sample"
     accession: str = ""
     dataset_id: str = ""
     study_id: str | None = None
@@ -135,16 +118,13 @@ class SampleRecord(AtlasRecord):
     is_technical_replicate: bool = False
     metadata_quality: str = "unknown"
 
-
 @dataclass(slots=True)
 class InterventionRecord(AtlasRecord):
-    record_type: str = "intervention"
     intervention_type: str = ""
     target: str = ""
     context: str = ""
     observed_outcomes: list[str] = field(default_factory=list)
     phenotype_ids: list[str] = field(default_factory=list)
     evidence_ids: list[str] = field(default_factory=list)
-
 
 Record = EvidenceRecord | MarkerRecord | PhenotypeRecord | CellStateRecord | DatasetRecord | StudyRecord | SampleRecord | InterventionRecord
