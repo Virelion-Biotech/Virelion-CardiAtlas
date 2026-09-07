@@ -1,40 +1,19 @@
 # Virelion-CardiAtlas
 
-CardiAtlas is a Python library and data layer for representing and retrieving cardiac biomedical metadata, evidence, phenotypes, datasets, studies, samples, and provenance.
+CardiAtlas is a Python library for representing and retrieving cardiac biomedical metadata, evidence, phenotypes, datasets, studies, samples, and provenance.
 
-## Scope
+## What it contains
 
-CardiAtlas provides:
+- Typed records for studies, datasets, samples, markers, phenotypes, interventions, evidence, and claims.
+- Controlled cardiac terminology and identifier/label normalization.
+- Evidence-linked relationships and contradiction-aware claims.
+- Study/sample metadata ingestion and quality checks.
+- SQLite persistence and JSONL interchange.
+- Deterministic release manifests, hashes, and snapshot diffs.
+- PubMed and GEO metadata retrieval.
+- CLI and Python APIs.
 
-- typed records for studies, datasets, samples, markers, phenotypes, interventions, evidence, and claims;
-- controlled cardiac terminology and conservative identifier/label normalization;
-- evidence-linked relationships and contradiction-aware claims;
-- study/sample metadata ingestion and quality checks;
-- SQLite persistence and JSONL interchange;
-- deterministic release manifests, hashes, and snapshot diffs;
-- NCBI PubMed/GEO metadata retrieval;
-- service/API interfaces for downstream Virelion repositories;
-- a CardiBench integration contract.
-
-CardiAtlas stores metadata and derived records. It does not redistribute third-party source datasets unless their licensing permits it.
-
-## Data model
-
-```text
-source
-  ↓
-study → dataset → sample
-  ↓        ↓
- evidence  phenotype / marker / intervention
-  ↓
-claim → relationship graph
-  ↓
-provenance → release manifest
-```
-
-Study-level and sample-level metadata are kept separate so downstream analyses can distinguish biological subjects, technical replicates, conditions, regions, modalities, and timepoints.
-
-Unknown metadata remain unknown. Normalization functions expose confidence and provenance rather than silently converting uncertain matches into facts.
+CardiAtlas stores metadata and derived records. It does not redistribute third-party source datasets unless their licenses permit it.
 
 ## Installation
 
@@ -42,7 +21,9 @@ Unknown metadata remain unknown. Normalization functions expose confidence and p
 pip install -e '.[test]'
 ```
 
-## CLI
+## Usage
+
+CLI examples:
 
 ```bash
 cardiatlas pubmed "myocardial infarction single cell" --limit 10
@@ -53,9 +34,7 @@ cardiatlas ontology --category phenotype
 cardiatlas release-check
 ```
 
-Network access is explicit; importing the package and running tests does not silently contact external services.
-
-## Python API
+Python:
 
 ```python
 from cardiatlas import AtlasService
@@ -64,38 +43,24 @@ service = AtlasService()
 print(service.resolve("MI"))
 ```
 
-See `docs/` and the examples directory for the current API surface.
+Network access is explicit; importing the package and running tests do not silently contact external services.
 
-## Repository layout
+## Inputs and outputs
 
-```text
-cardiatlas/        package source
-schemas/           machine-readable contracts
-data/examples/    example records
-data/reference/   reference metadata
-docs/              architecture and integration documentation
-tests/             regression and integration tests
-```
+**Inputs:** study/dataset/sample metadata, identifiers, phenotype and ontology terms, evidence records, JSONL records, and optional PubMed/GEO queries.
 
-## Integrations
+**Outputs:** typed metadata/evidence records, normalized identifiers and labels, SQLite/JSONL records, release manifests, hashes, snapshot diffs, and query results.
 
-- **CardiBench:** benchmark context and normalized dataset/study metadata.
-- **CardiLearn:** training-corpus metadata and biological grouping/provenance.
-- **CardiEval:** evaluation context and evidence links.
-- **CardiAgent/CardiVex:** phenotype, evidence, dataset, and graph context.
-- **CardiBridge:** cross-repository contract exchange.
-- **HeartTwin:** upstream context and metadata service.
+Unknown metadata remain unknown; normalization retains confidence and provenance rather than silently converting uncertain matches into facts.
 
-CardiAtlas does not own benchmark split policy or model evaluation; those remain in the respective repositories.
+## Validation
 
-## Validation and scientific limitations
+Automated checks cover schema integrity, identifiers, duplicate accessions, provenance, release state, and metadata completeness. Tests cover the public API and regression behavior. Passing validation does not establish biological correctness; ontology mappings and scientific interpretation require review.
 
-Automated validation checks schema integrity, IDs, duplicate accessions, provenance, release state, and metadata completeness. Passing these checks does not establish biological correctness. Ontology mappings, study interpretation, and scientific conclusions require review.
+## Limitations
+
+Metadata quality is limited by the source records. Identifier and ontology normalization can remain ambiguous. Public-accession availability does not guarantee complete sample-level metadata or correct biological interpretation. CardiAtlas does not replace scientific review of study design or evidence.
 
 ## License
 
 GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). See `LICENSE`.
-
-## Citation
-
-If you use CardiAtlas in research, cite the repository release and the original datasets/publications from which records were derived.
