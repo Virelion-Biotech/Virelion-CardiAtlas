@@ -22,6 +22,7 @@ class AtlasRecord:
 
 @dataclass(slots=True)
 class EvidenceRecord(AtlasRecord):
+    record_type: str = "evidence"
     source_type: Literal["pubmed", "doi", "geo", "sra", "arrayexpress", "clinical", "other"] = "other"
     source_identifier: str = ""
     citation: str = ""
@@ -37,6 +38,7 @@ class EvidenceRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class MarkerRecord(AtlasRecord):
+    record_type: str = "marker"
     entity_id: str = ""
     entity_type: Literal["gene", "protein", "metabolite", "feature"] = "gene"
     role: str = ""
@@ -50,6 +52,7 @@ class MarkerRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class PhenotypeRecord(AtlasRecord):
+    record_type: str = "phenotype"
     category: str = ""
     synonyms: list[str] = field(default_factory=list)
     manifestations: list[str] = field(default_factory=list)
@@ -59,6 +62,7 @@ class PhenotypeRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class CellStateRecord(AtlasRecord):
+    record_type: str = "cell_state"
     cell_type: str = ""
     state: str = ""
     parent_states: list[str] = field(default_factory=list)
@@ -70,6 +74,7 @@ class CellStateRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class DatasetRecord(AtlasRecord):
+    record_type: str = "dataset"
     accession: str = ""
     repository: Repository = "other"
     study_title: str = ""
@@ -90,6 +95,7 @@ class DatasetRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class StudyRecord(AtlasRecord):
+    record_type: str = "study"
     accession: str = ""
     repository: Repository = "other"
     title: str = ""
@@ -103,6 +109,7 @@ class StudyRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class SampleRecord(AtlasRecord):
+    record_type: str = "sample"
     accession: str = ""
     dataset_id: str = ""
     study_id: str | None = None
@@ -120,6 +127,7 @@ class SampleRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class InterventionRecord(AtlasRecord):
+    record_type: str = "intervention"
     intervention_type: str = ""
     target: str = ""
     context: str = ""
