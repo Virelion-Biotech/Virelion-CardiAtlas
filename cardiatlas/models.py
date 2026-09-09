@@ -11,7 +11,7 @@ Repository = Literal["GEO", "SRA", "ArrayExpress", "dbGaP", "other"]
 @dataclass(slots=True)
 class AtlasRecord:
     id: str
-    record_type: str
+    record_type: str = field(init=False)
     name: str
     description: str = ""
     source_ids: list[str] = field(default_factory=list)
@@ -22,7 +22,7 @@ class AtlasRecord:
 
 @dataclass(slots=True)
 class EvidenceRecord(AtlasRecord):
-    record_type: str = "evidence"
+    record_type: str = field(default="evidence", init=False)
     source_type: Literal["pubmed", "doi", "geo", "sra", "arrayexpress", "clinical", "other"] = "other"
     source_identifier: str = ""
     citation: str = ""
@@ -38,7 +38,7 @@ class EvidenceRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class MarkerRecord(AtlasRecord):
-    record_type: str = "marker"
+    record_type: str = field(default="marker", init=False)
     entity_id: str = ""
     entity_type: Literal["gene", "protein", "metabolite", "feature"] = "gene"
     role: str = ""
@@ -52,7 +52,7 @@ class MarkerRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class PhenotypeRecord(AtlasRecord):
-    record_type: str = "phenotype"
+    record_type: str = field(default="phenotype", init=False)
     category: str = ""
     synonyms: list[str] = field(default_factory=list)
     manifestations: list[str] = field(default_factory=list)
@@ -62,7 +62,7 @@ class PhenotypeRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class CellStateRecord(AtlasRecord):
-    record_type: str = "cell_state"
+    record_type: str = field(default="cell_state", init=False)
     cell_type: str = ""
     state: str = ""
     parent_states: list[str] = field(default_factory=list)
@@ -74,7 +74,7 @@ class CellStateRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class DatasetRecord(AtlasRecord):
-    record_type: str = "dataset"
+    record_type: str = field(default="dataset", init=False)
     accession: str = ""
     repository: Repository = "other"
     study_title: str = ""
@@ -95,7 +95,7 @@ class DatasetRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class StudyRecord(AtlasRecord):
-    record_type: str = "study"
+    record_type: str = field(default="study", init=False)
     accession: str = ""
     repository: Repository = "other"
     title: str = ""
@@ -109,7 +109,7 @@ class StudyRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class SampleRecord(AtlasRecord):
-    record_type: str = "sample"
+    record_type: str = field(default="sample", init=False)
     accession: str = ""
     dataset_id: str = ""
     study_id: str | None = None
@@ -127,7 +127,7 @@ class SampleRecord(AtlasRecord):
 
 @dataclass(slots=True)
 class InterventionRecord(AtlasRecord):
-    record_type: str = "intervention"
+    record_type: str = field(default="intervention", init=False)
     intervention_type: str = ""
     target: str = ""
     context: str = ""
