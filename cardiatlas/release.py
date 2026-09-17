@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Iterable
 
 from .models import Record
@@ -48,7 +48,7 @@ def create_manifest(records: Iterable[Record], version: str, schema_version: str
     return ReleaseManifest(
         version=version,
         schema_version=schema_version,
-        created_at=datetime.now(UTC).isoformat(),
+        created_at=datetime.now(timezone.utc).isoformat(),
         record_count=len(materialized),
         record_types=counts,
         digest=digest_records(materialized),
