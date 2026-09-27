@@ -11,7 +11,7 @@ class FakeNcbiClient:
 
     @staticmethod
     def geo_family_soft_url(accession: str) -> str:
-        return f"https://ftp.ncbi.nlm.nih.gov/geo/series/GSE000nnn/{accession}/{accession}_family.soft.gz"
+        return f"https://ftp.ncbi.nlm.nih.gov/geo/series/GSE000nnn/{accession}/soft/{accession}_family.soft.gz"
 
     def fetch_geo_family_soft(self, accession: str) -> bytes:
         return self.payload
