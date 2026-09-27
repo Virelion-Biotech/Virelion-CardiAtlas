@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Iterable
 
 from .acquisition import AcquisitionTarget, acquisition_plan
@@ -34,7 +34,7 @@ def _target_item(target: AcquisitionTarget, external_id: str, title: str, source
         external_id=external_id,
         title=title,
         source_url=source_url,
-        retrieved_at=datetime.now(UTC).replace(microsecond=0).isoformat(),
+        retrieved_at=datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         raw_digest=canonical_digest(payload),
         metadata={"domain": target.domain, "priority": target.priority},
     )
