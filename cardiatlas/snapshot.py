@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Iterable
 
 from .models import Record
@@ -45,7 +45,7 @@ def create_snapshot(records: Iterable[Record], version: str = "0.4.0") -> Snapsh
     return SnapshotManifest(
         version=version,
         schema_version=SCHEMA_VERSION,
-        created_at=datetime.now(UTC).replace(microsecond=0).isoformat(),
+        created_at=datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         record_count=len(values),
         record_types=counts,
         digest=digest,
