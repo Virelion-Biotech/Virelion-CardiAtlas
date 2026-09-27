@@ -39,13 +39,13 @@ def _digest(items: Iterable[HarvestItem]) -> str:
 
 
 def create_harvest_manifest(items: Iterable[HarvestItem], version: str = "1.0", created_at: str | None = None) -> HarvestManifest:
-    from datetime import UTC, datetime
+    from datetime import datetime, timezone
 
     materialized = list(items)
     qc = assess_harvest(materialized)
     sources = {item.source.strip().lower() for item in materialized if item.source.strip()}
     queries = {item.query_id for item in materialized if item.query_id}
-    timestamp = created_at or datetime.now(UTC).replace(microsecond=0).isoformat()
+    timestamp = created_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     return HarvestManifest(
         version=version,
         created_at=timestamp,
