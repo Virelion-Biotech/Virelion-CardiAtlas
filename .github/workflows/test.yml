@@ -20,6 +20,8 @@ jobs:
         run: python -m pip install --upgrade pip && pip install -e '.[test]'
       - name: Compile package
         run: python -m compileall -q cardiatlas tests
+      - name: Check generated JSON schemas are in sync with models
+        run: python scripts/generate_json_schemas.py --check
       - name: Run tests
         run: pytest -q
       - name: Smoke-test CLI
@@ -48,6 +50,40 @@ jobs:
           test -s /tmp/reconstructed/study.json
           test -s /tmp/reconstructed/samples.jsonl
           test -s /tmp/reconstructed/report.json
+      - name: Exercise release lifecycle CLI
+        run: |
+          rm -f /tmp/lifecycle.sqlite
+          python - <<'PY'
+          from cardiatlas.sqlite import SQLiteAtlasStore
+          from cardiatlas.models import EvidenceRecord, DatasetRecord
+          from cardiatlas.graph import Relation
+
+          with SQLiteAtlasStore("/tmp/lifecycle.sqlite") as store:
+              evidence = EvidenceRecord(id="evidence:e1", name="Some paper", source_type="pubmed", source_identifier="12345678")
+              dataset = DatasetRecord(id="dataset:geo:GSE1", name="GSE1", accession="GSE1", repository="GEO", evidence_ids=[evidence.id], source_ids=[evidence.id])
+              store.upsert_many([evidence, dataset])
+              store.put_relation(Relation(subject=dataset.id, predicate="derived_from", object=evidence.id, evidence_ids=(evidence.id,), confidence=0.9, source="ci"))
+          PY
+          cardiatlas release stage /tmp/lifecycle.sqlite --version ci.0.0
+          cardiatlas release promote /tmp/lifecycle.sqlite ci.0.0
+          cardiatlas release verify /tmp/lifecycle.sqlite ci.0.0 --commit "$GITHUB_SHA" --ci-passed
+          cardiatlas release show /tmp/lifecycle.sqlite ci.0.0 | python -c "import json,sys; d=json.load(sys.stdin); assert d['state']=='verified', d"
+          cardiatlas release list /tmp/lifecycle.sqlite --state verified > /dev/null
+      - name: Exercise persistent-store CLI (load/corpus/search/context/export)
+        run: |
+          rm -f /tmp/atlas.sqlite
+          cardiatlas load /tmp/atlas.sqlite data/examples/atlas.jsonl data/examples/markers.jsonl data/examples/phenotypes.jsonl data/reference/cardiBench_evidence.jsonl data/reference/cardiac_datasets.jsonl --relations data/reference/core_relationships.jsonl
+          cardiatlas corpus --db /tmp/atlas.sqlite | python -c "import json,sys; d=json.load(sys.stdin); assert d['record_count'] == 13, d"
+          cardiatlas search /tmp/atlas.sqlite "cardiac fibrosis" --limit 5 > /tmp/search.json
+          test -s /tmp/search.json
+          cardiatlas context /tmp/atlas.sqlite marker:postn --hops 1 | python -c "import json,sys; d=json.load(sys.stdin); assert d['neighbors'], d"
+          cardiatlas release-check --db /tmp/atlas.sqlite | python -c "import json,sys; d=json.load(sys.stdin); assert d['passed'], d"
+          cardiatlas export /tmp/atlas.sqlite /tmp/export.jsonl
+          test "$(wc -l < /tmp/export.jsonl)" -eq 13
+          cardiatlas export /tmp/atlas.sqlite /tmp/export_release.json --release-version 1.0.0
+          python -c "import json; d=json.load(open('/tmp/export_release.json')); assert d['manifest']['version'] == '1.0.0', d"
+          cardiatlas export /tmp/atlas.sqlite /tmp/candidates.json --benchmark-candidates
+          test -s /tmp/candidates.json
       - name: Exercise GEO SOFT parser
         run: |
           python - <<'PY'

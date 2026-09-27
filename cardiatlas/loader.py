@@ -27,7 +27,7 @@ def record_from_dict(payload: dict) -> Record:
     cls = _RECORD_CLASSES.get(record_type)
     if cls is None:
         raise ValueError(f"unsupported record_type: {record_type}")
-    field_names = {field.name for field in cls.__dataclass_fields__.values()}
+    field_names = {field.name for field in cls.__dataclass_fields__.values() if field.init}
     filtered = {key: value for key, value in payload.items() if key in field_names}
     return require_valid(cls(**filtered))
 

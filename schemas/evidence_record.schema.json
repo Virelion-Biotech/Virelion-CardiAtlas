@@ -3,18 +3,111 @@
   "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/evidence_record.schema.json",
   "title": "CardiAtlas Evidence Record",
   "type": "object",
-  "required": ["id", "record_type", "name", "source_type", "source_identifier"],
+  "required": [
+    "id",
+    "record_type",
+    "name"
+  ],
   "properties": {
-    "id": {"type": "string", "minLength": 1},
-    "record_type": {"const": "evidence"},
-    "name": {"type": "string", "minLength": 1},
-    "source_type": {"type": "string"},
-    "source_identifier": {"type": "string"},
-    "citation": {"type": "string"},
-    "evidence_level": {"enum": ["primary", "review", "database", "inferred", "curated"]},
-    "organism": {"type": ["string", "null"]},
-    "tissue": {"type": ["string", "null"]},
-    "assay": {"type": ["string", "null"]},
-    "year": {"type": ["integer", "null"]}
+    "assay": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "citation": {
+      "type": "string"
+    },
+    "context": {
+      "type": "object"
+    },
+    "description": {
+      "type": "string"
+    },
+    "evidence_level": {
+      "enum": [
+        "primary",
+        "review",
+        "database",
+        "inferred",
+        "curated"
+      ]
+    },
+    "extracted_claim": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "name": {
+      "type": "string"
+    },
+    "organism": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "polarity": {
+      "enum": [
+        "supports",
+        "refutes",
+        "mixed",
+        "unknown"
+      ]
+    },
+    "record_type": {
+      "const": "evidence"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "source_identifier": {
+      "type": "string"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_type": {
+      "enum": [
+        "pubmed",
+        "doi",
+        "geo",
+        "sra",
+        "arrayexpress",
+        "clinical",
+        "other"
+      ]
+    },
+    "source_url": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tissue": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "year": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
   }
 }

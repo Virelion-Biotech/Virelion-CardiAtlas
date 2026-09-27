@@ -24,7 +24,7 @@
 `integrations.py` converts dataset records into a portable CardiBench candidate. `contracts.py` defines a versioned `AtlasContext` payload for inter-repository exchange.
 
 ### Release layer
-`release.py` canonicalizes records and computes deterministic SHA-256 digests. A release therefore identifies both a logical Atlas version and the exact record content represented by it.
+`release.py` canonicalizes records and computes deterministic SHA-256 digests. A release therefore identifies both a logical Atlas version and the exact record content represented by it. `release_checks.py` runs the release-checklist checks (docs/release-checklist.md) against a record set. `release_lifecycle.py` layers the mutable draft/candidate/verified/deprecated state machine on top of both, without ever changing what a release's digest attests to.
 
 ## Recommended data flow
 

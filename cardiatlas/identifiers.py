@@ -17,7 +17,11 @@ class IdentifierResolution:
 
 # Deliberately small and auditable aliases. This is not intended to replace
 # authoritative upstream identifier services.
-GENE_ALIASES: dict[str, str] = {
+#
+# Keys are written in human-readable form; the lookup table below runs each
+# key through canonical_key() so multi-word aliases (which canonical_key
+# collapses to underscore-joined tokens) still match at lookup time.
+_GENE_ALIASES_RAW: dict[str, str] = {
     "tnnt2": "TNNT2",
     "cardiac troponin t": "TNNT2",
     "myh7": "MYH7",
@@ -34,6 +38,7 @@ GENE_ALIASES: dict[str, str] = {
     "ccl2": "CCL2",
     "tgfb1": "TGFB1",
 }
+GENE_ALIASES: dict[str, str] = {canonical_key(k): v for k, v in _GENE_ALIASES_RAW.items()}
 
 
 def resolve_gene(value: str) -> IdentifierResolution:
@@ -41,8 +46,16 @@ def resolve_gene(value: str) -> IdentifierResolution:
     canonical = GENE_ALIASES.get(key)
     if canonical:
         return IdentifierResolution(value, canonical, "gene_symbol", 0.99, value, "curated")
+    # Uncurated fallback: accept a token that is already in plausible gene-symbol
+    # format (uppercase, alphanumeric) at lower confidence -- but only when it
+    # isn't already recognized as a specific accession format (GEO/SRA/bioproject/
+    # PMID), so e.g. "GSE217494" is left for resolve_accession() instead of being
+    # swallowed here.
+    stripped = value.strip()
     normalized = normalize_gene_symbol(value)
-    if normalized and normalized == value.strip().upper():
+    already_formatted = bool(stripped) and stripped == normalized and stripped.isalnum()
+    recognized_accession_type = resolve_accession(value).identifier_type
+    if already_formatted and recognized_accession_type in (None, "accession"):
         return IdentifierResolution(value, normalized, "gene_symbol", 0.80, value, "format")
     return IdentifierResolution(value, None, None, 0.0)
 

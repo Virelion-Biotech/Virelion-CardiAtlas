@@ -15,7 +15,11 @@ class HarmonizedValue:
     note: str = ""
 
 
-CONDITION_ALIASES = {
+# Keys are written in human-readable form; canonical_key() collapses spaces
+# and hyphens to underscores, so the lookup tables below are built by running
+# every raw key through canonical_key() to match what harmonize_* actually
+# looks up at call time.
+_CONDITION_ALIASES_RAW = {
     "sham": "reference",
     "control": "reference",
     "healthy": "reference",
@@ -30,8 +34,9 @@ CONDITION_ALIASES = {
     "inflammation": "inflammation",
     "inflammatory": "inflammation",
 }
+CONDITION_ALIASES = {canonical_key(k): v for k, v in _CONDITION_ALIASES_RAW.items()}
 
-MODALITY_ALIASES = {
+_MODALITY_ALIASES_RAW = {
     "single cell rna": "scrna",
     "single-cell rna": "scrna",
     "scrna-seq": "scrna",
@@ -41,6 +46,7 @@ MODALITY_ALIASES = {
     "bulk rna-seq": "bulk_rna",
     "rna-seq": "bulk_rna",
 }
+MODALITY_ALIASES = {canonical_key(k): v for k, v in _MODALITY_ALIASES_RAW.items()}
 
 
 def harmonize_condition(raw: str) -> HarmonizedValue:

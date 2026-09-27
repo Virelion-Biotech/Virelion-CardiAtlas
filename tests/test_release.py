@@ -1,4 +1,4 @@
-from cardiatlas.models import MarkerRecord
+from cardiatlas.models import DatasetRecord, EvidenceRecord, MarkerRecord
 from cardiatlas.release import create_manifest, digest_records, verify_digest
 
 
@@ -14,3 +14,12 @@ def test_manifest_and_verification():
     assert manifest.record_count == 1
     assert manifest.record_types == {"marker": 1}
     assert verify_digest([record], manifest.digest)
+
+
+def test_manifest_records_source_inventory():
+    dataset = DatasetRecord(id="dataset:GSE1", name="GSE1", accession="GSE1", repository="GEO")
+    evidence = EvidenceRecord(id="evidence:e1", name="Paper", source_type="pubmed", source_identifier="999")
+    manifest = create_manifest([dataset, evidence], "0.3.0")
+    assert manifest.dataset_accessions == ("GSE1",)
+    assert manifest.evidence_sources == ("pubmed:999",)
+    assert manifest.to_dict()["dataset_accessions"] == ["GSE1"]

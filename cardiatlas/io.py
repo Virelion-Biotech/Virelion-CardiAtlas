@@ -21,7 +21,7 @@ def write_jsonl(records: list[Record], path: str | Path) -> None:
 def read_jsonl(path: str | Path, record_cls: type[T]) -> list[T]:
     target = Path(path)
     result: list[T] = []
-    allowed = {f.name for f in fields(record_cls)}
+    allowed = {f.name for f in fields(record_cls) if f.init}
     with target.open("r", encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, 1):
             if not line.strip():

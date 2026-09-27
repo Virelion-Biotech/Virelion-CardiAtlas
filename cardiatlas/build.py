@@ -65,7 +65,7 @@ def build_reference(root: str | Path, version: str = "0.4.0") -> ReferenceBuild:
     records = read_bundle(existing)
     relations = _load_relations(base / "data/reference/core_relationships.jsonl")
     manifest = create_manifest(records, version)
-    readiness = assess_release(records)
+    readiness = assess_release(records, relations)
     return ReferenceBuild(records, relations, manifest, readiness)
 
 

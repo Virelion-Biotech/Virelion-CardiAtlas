@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .models import DatasetRecord, StudyRecord
 from .normalize import canonical_key
@@ -48,6 +48,7 @@ def attach_datasets(study: StudyRecord, datasets: list[DatasetRecord]) -> StudyR
     attached = [dataset.id for dataset in datasets if dataset.study_id == study.id or dataset.accession == study.accession]
     if not attached:
         return study
-    return StudyRecord(
-        **{**study.to_dict(), "dataset_ids": sorted(set(study.dataset_ids) | set(attached)), "schema_version": study.schema_version}
-    )
+    # dataclasses.replace() -- rather than StudyRecord(**study.to_dict())
+    # -- correctly carries over init=False fields like record_type instead
+    # of trying (and failing) to pass them back into the constructor.
+    return replace(study, dataset_ids=sorted(set(study.dataset_ids) | set(attached)))

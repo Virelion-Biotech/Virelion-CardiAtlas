@@ -110,7 +110,10 @@ class AtlasService:
         study, samples, report = reconstruct_study(dataset, rows)
         self.add(study)
         self.add_many(samples)
-        self.relate(dataset.id, "has_study", study.id, confidence=1.0, source="cardiatlas:geo-reconstruction")
+        # docs/data-model.md defines the controlled direction as
+        # "study -> has_dataset -> dataset"; "has_study" is not a
+        # recognized predicate in schema.RELATION_TYPES.
+        self.relate(study.id, "has_dataset", dataset.id, confidence=1.0, source="cardiatlas:geo-reconstruction")
         for sample in samples:
             self.relate(study.id, "has_sample", sample.id, confidence=1.0, source="cardiatlas:geo-reconstruction")
             self.relate(dataset.id, "has_sample", sample.id, confidence=1.0, source="cardiatlas:geo-reconstruction")
@@ -151,7 +154,7 @@ class AtlasService:
         return create_manifest(self.registry.all(), version, schema_version)
 
     def release_readiness(self) -> ReleaseReadiness:
-        return assess_release(self.registry.all())
+        return assess_release(self.registry.all(), self.graph.relations())
 
     def corpus_report(self) -> CorpusReport:
         return corpus_report(self.registry.all())

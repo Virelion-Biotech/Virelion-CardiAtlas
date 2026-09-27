@@ -189,7 +189,7 @@ def reconstruct_study(
     dataset: DatasetRecord,
     sample_rows: Iterable[Mapping[str, object]],
 ) -> tuple[StudyRecord, list[SampleRecord], ReconstructionReport]:
-    study_id = dataset.study_id or f"study:{canonical_key(dataset.accession)}"
+    study_id = dataset.study_id or f"study:{dataset.accession}"
     samples, report = reconstruct_samples(sample_rows, dataset_id=dataset.id, study_id=study_id)
     study = StudyRecord(
         id=study_id,

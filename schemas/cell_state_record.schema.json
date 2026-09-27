@@ -3,19 +3,83 @@
   "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/cell_state_record.schema.json",
   "title": "CardiAtlas Cell State Record",
   "type": "object",
-  "required": ["id", "record_type", "name", "cell_type", "state"],
+  "required": [
+    "id",
+    "record_type",
+    "name"
+  ],
   "properties": {
-    "id": {"type": "string", "minLength": 1},
-    "record_type": {"const": "cell_state"},
-    "name": {"type": "string", "minLength": 1},
-    "description": {"type": "string"},
-    "cell_type": {"type": "string"},
-    "state": {"type": "string"},
-    "parent_states": {"type": "array", "items": {"type": "string"}},
-    "marker_ids": {"type": "array", "items": {"type": "string"}},
-    "pathways": {"type": "array", "items": {"type": "string"}},
-    "phenotypes": {"type": "array", "items": {"type": "string"}},
-    "species": {"type": "array", "items": {"type": "string"}},
-    "evidence_ids": {"type": "array", "items": {"type": "string"}}
+    "cell_type": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "id": {
+      "type": "string"
+    },
+    "marker_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "name": {
+      "type": "string"
+    },
+    "parent_states": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pathways": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "phenotypes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "record_type": {
+      "const": "cell_state"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "species": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "state": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
   }
 }

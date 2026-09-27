@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Iterable
 
-from .models import Record
+from .models import DatasetRecord, EvidenceRecord, Record
 from .schema import SCHEMA_VERSION
 
 
@@ -18,6 +18,11 @@ class ReleaseManifest:
     record_count: int
     record_types: dict[str, int]
     digest: str
+    # release-checklist item 8: "the exact release version, schema version,
+    # and source inventory are recorded". version/schema_version are the
+    # fields above; these two cover the source-inventory half.
+    dataset_accessions: tuple[str, ...] = ()
+    evidence_sources: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -27,6 +32,8 @@ class ReleaseManifest:
             "record_count": self.record_count,
             "record_types": dict(sorted(self.record_types.items())),
             "digest": self.digest,
+            "dataset_accessions": list(self.dataset_accessions),
+            "evidence_sources": list(self.evidence_sources),
         }
 
 
@@ -45,6 +52,12 @@ def create_manifest(records: Iterable[Record], version: str, schema_version: str
     counts: dict[str, int] = {}
     for record in materialized:
         counts[record.record_type] = counts.get(record.record_type, 0) + 1
+    dataset_accessions = tuple(sorted({r.accession for r in materialized if isinstance(r, DatasetRecord) and r.accession}))
+    evidence_sources = tuple(sorted({
+        f"{r.source_type}:{r.source_identifier}"
+        for r in materialized
+        if isinstance(r, EvidenceRecord) and r.source_identifier
+    }))
     return ReleaseManifest(
         version=version,
         schema_version=schema_version,
@@ -52,6 +65,8 @@ def create_manifest(records: Iterable[Record], version: str, schema_version: str
         record_count=len(materialized),
         record_types=counts,
         digest=digest_records(materialized),
+        dataset_accessions=dataset_accessions,
+        evidence_sources=evidence_sources,
     )
 
 
