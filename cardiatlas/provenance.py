@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 
 @dataclass(frozen=True, slots=True)
@@ -9,7 +9,7 @@ class ProvenanceEvent:
     action: str
     actor: str = "system"
     source: str | None = None
-    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     details: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, object]:

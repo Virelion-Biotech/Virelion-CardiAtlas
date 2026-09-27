@@ -44,7 +44,7 @@ class NcbiClient:
         if not re.fullmatch(r"GSE\d+", accession):
             raise ValueError(f"invalid GEO Series accession: {accession}")
         parent = accession[:-3] + "nnn" if len(accession) > 6 else accession
-        return f"https://ftp.ncbi.nlm.nih.gov/geo/series/{parent}/{accession}/{accession}_family.soft.gz"
+        return f"https://ftp.ncbi.nlm.nih.gov/geo/series/{parent}/{accession}/soft/{accession}_family.soft.gz"
 
     def _geo_request(self, accession: str) -> bytes:
         url = self.geo_family_soft_url(accession)

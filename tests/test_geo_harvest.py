@@ -2,6 +2,7 @@ from pathlib import Path
 
 from cardiatlas.adapters import geo_summary_to_dataset
 from cardiatlas.geo_harvest import reconstruct_geo_series, write_geo_bundle
+from cardiatlas.ncbi import NcbiClient
 
 
 class FakeNcbiClient:
@@ -10,10 +11,17 @@ class FakeNcbiClient:
 
     @staticmethod
     def geo_family_soft_url(accession: str) -> str:
-        return f"https://ftp.ncbi.nlm.nih.gov/geo/series/GSE000nnn/{accession}/{accession}_family.soft.gz"
+        return f"https://ftp.ncbi.nlm.nih.gov/geo/series/GSE000nnn/{accession}/soft/{accession}_family.soft.gz"
 
     def fetch_geo_family_soft(self, accession: str) -> bytes:
         return self.payload
+
+
+def test_geo_family_soft_url_uses_ncbi_soft_directory():
+    assert NcbiClient.geo_family_soft_url("GSE153480") == (
+        "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE153nnn/"
+        "GSE153480/soft/GSE153480_family.soft.gz"
+    )
 
 
 def test_geo_bundle_records_source_digest_and_readiness(tmp_path: Path):
@@ -23,7 +31,7 @@ def test_geo_bundle_records_source_digest_and_readiness(tmp_path: Path):
     bundle = reconstruct_geo_series(FakeNcbiClient(soft), dataset)
 
     assert bundle.source_digest
-    assert bundle.source_url.endswith("GSE123456_family.soft.gz")
+    assert bundle.source_url.endswith("/soft/GSE123456_family.soft.gz")
     assert bundle.payload_bytes == len(soft)
     assert bundle.benchmark_readiness.checks["sample_count"]
     assert bundle.benchmark_readiness.checks["multiple_conditions"]
