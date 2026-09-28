@@ -16,6 +16,7 @@ All notable changes to Virelion-CardiAtlas are documented here.
 - Omitted HeartTwin search queries now return zero hits instead of dumping arbitrary persistent records.
 - JSON bodies, field types, search limits, body size, and malformed `Content-Length` are validated; unknown routes return 404 and expected contract errors return 400.
 - Request-local records are isolated from the server's base in-memory Atlas.
+- Atlas context provenance now includes only records that actually resolve; missing requested IDs are reported under `context.metadata.missing_record_ids` instead of being represented as provenance.
 
 ## 0.7.0
 
