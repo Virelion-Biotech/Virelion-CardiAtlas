@@ -2,6 +2,21 @@
 
 All notable changes to Virelion-CardiAtlas are documented here.
 
+## 0.8.1
+
+### Added
+
+- `cardiatlas serve <db>`: stdlib-only HTTP deployment for HeartTwin's registered `atlas.search` and `atlas.context` capabilities.
+- Request-local `records` overlays for HeartTwin workflows without mutating the persistent Atlas.
+- Real-socket HTTP contract tests and a CI smoke test.
+
+### Fixed
+
+- Native/HTTP wire parity: `atlas.context` returns HeartTwin's typed wrapper rather than a raw `AtlasContext`, and `atlas.search` returns `{contract_version, query, records, count}`.
+- Omitted HeartTwin search queries now return zero hits instead of dumping arbitrary persistent records.
+- JSON bodies, field types, search limits, body size, and malformed `Content-Length` are validated; unknown routes return 404 and expected contract errors return 400.
+- Request-local records are isolated from the server's base in-memory Atlas.
+
 ## 0.7.0
 
 This release turns CardiAtlas from a collection of correct-but-disconnected one-shot commands into an actual cumulative, queryable knowledge base end to end from the CLI, and fixes several more latent bugs of the same shape as 0.6.0's.
