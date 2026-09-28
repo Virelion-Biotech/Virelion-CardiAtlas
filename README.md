@@ -11,7 +11,7 @@ CardiAtlas is a Python library for representing and retrieving cardiac biomedica
 - Real PubMed/GEO metadata retrieval and live GEO Series (SOFT) reconstruction, using only the standard library.
 - SQLite persistence, JSONL interchange, and a `cardiatlas.models` <-> `schemas/*.json` contract kept in sync by `scripts/generate_json_schemas.py`.
 - A draft -> candidate -> verified -> deprecated release lifecycle (`cardiatlas.release_lifecycle`), with deterministic manifests, hashes, and readiness checks.
-- CLI and Python APIs, including a small framework-agnostic facade (`AtlasAPI`) for other Virelion-HeartTwin repos to call into.
+- CLI and Python APIs, including a small framework-agnostic facade (`AtlasAPI`) and a stdlib-only HeartTwin HTTP surface.
 
 CardiAtlas stores metadata and derived records. It does not redistribute third-party source datasets unless their licenses permit it.
 
@@ -65,6 +65,21 @@ cardiatlas export atlas.sqlite everything.jsonl
 cardiatlas export atlas.sqlite release.json --release-version 1.2.0
 cardiatlas export atlas.sqlite candidates.json --benchmark-candidates
 ```
+
+## HeartTwin HTTP deployment
+
+A persistent Atlas can be exposed to HeartTwin without adding a web-framework dependency:
+
+```bash
+cardiatlas serve atlas.sqlite --host 0.0.0.0 --port 8420
+# set CARDIATLAS_URL=http://<host>:8420 in HeartTwin
+```
+
+The server implements `GET /health`, `POST /v1/atlas/search`, and
+`POST /v1/atlas/context`. Its responses match HeartTwin's native CardiAtlas
+adapter shape; optional request-local `records` are overlaid without changing
+the persistent store. See `docs/HEARTTWIN_INTEGRATION.md` for the exact
+request/response contract.
 
 ## Release lifecycle
 

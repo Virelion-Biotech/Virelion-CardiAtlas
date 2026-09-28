@@ -161,10 +161,15 @@ class AtlasService:
 
     def atlas_context(self, context_id: str, record_ids: list[str]) -> AtlasContext:
         grouped: dict[str, list[str]] = {}
+        resolved: list[str] = []
+        missing: list[str] = []
         for record_id in record_ids:
             record = self.registry.get(record_id)
-            if record is not None:
-                grouped.setdefault(record.record_type, []).append(record_id)
+            if record is None:
+                missing.append(record_id)
+                continue
+            resolved.append(record_id)
+            grouped.setdefault(record.record_type, []).append(record_id)
         return AtlasContext(
             context_id=context_id,
             phenotype_ids=tuple(grouped.get("phenotype", ())),
@@ -175,5 +180,6 @@ class AtlasService:
             sample_ids=tuple(grouped.get("sample", ())),
             intervention_ids=tuple(grouped.get("intervention", ())),
             evidence_ids=tuple(grouped.get("evidence", ())),
-            provenance=tuple(sorted(set(record_ids))),
+            provenance=tuple(sorted(set(resolved))),
+            metadata={"missing_record_ids": sorted(set(missing))} if missing else {},
         )

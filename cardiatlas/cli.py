@@ -16,6 +16,7 @@ from .geo_harvest import reconstruct_geo_accession, write_geo_bundle
 from .graph import Relation
 from .harvest_manifest import create_harvest_manifest
 from .harvest_store import write_harvest
+from .httpd import serve as serve_http
 from .harvester import harvest_plan
 from .identifiers import resolve as resolve_identifier
 from .loader import read_bundle, record_from_dict
@@ -204,6 +205,11 @@ def build_parser() -> argparse.ArgumentParser:
     export_cmd.add_argument("--release-version", default=None, help="write a release bundle (manifest + records) at this version instead of a bare JSONL")
     export_cmd.add_argument("--benchmark-candidates", action="store_true", help="export DatasetRecords as CardiBench candidates instead")
 
+    serve_cmd = sub.add_parser("serve", help="serve atlas.search/atlas.context over HTTP for Virelion-HeartTwin")
+    serve_cmd.add_argument("db")
+    serve_cmd.add_argument("--host", default="127.0.0.1")
+    serve_cmd.add_argument("--port", type=int, default=8420)
+
     return parser
 
 
@@ -386,6 +392,10 @@ def _dispatch(args: argparse.Namespace, service: AtlasService) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+
+    if args.command == "serve":
+        serve_http(args.db, args.host, args.port)
+        return 0
 
     if args.command == "release":
         with SQLiteAtlasStore(args.db) as store:

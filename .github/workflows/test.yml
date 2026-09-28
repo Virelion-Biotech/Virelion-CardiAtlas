@@ -84,6 +84,17 @@ jobs:
           python -c "import json; d=json.load(open('/tmp/export_release.json')); assert d['manifest']['version'] == '1.0.0', d"
           cardiatlas export /tmp/atlas.sqlite /tmp/candidates.json --benchmark-candidates
           test -s /tmp/candidates.json
+      - name: Exercise HeartTwin HTTP surface (cardiatlas serve)
+        run: |
+          cardiatlas serve /tmp/atlas.sqlite --port 8420 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          sleep 1
+          curl -sf http://127.0.0.1:8420/health | python -c "import json,sys; d=json.load(sys.stdin); assert d['record_count'] == 13, d"
+          curl -sf -H 'Content-Type: application/json' -X POST http://127.0.0.1:8420/v1/atlas/search -d '{"query":"cardiac fibrosis","limit":3}' | python -c "import json,sys; d=json.load(sys.stdin); assert d['count'] > 0 and d['records'], d"
+          curl -sf -H 'Content-Type: application/json' -X POST http://127.0.0.1:8420/v1/atlas/context -d '{"record_ids":["marker:postn"]}' | python -c "import json,sys; d=json.load(sys.stdin); assert d['context']['marker_ids'] == ['marker:postn'], d"
+          kill $SERVER_PID
+          trap - EXIT
       - name: Exercise GEO SOFT parser
         run: |
           python - <<'PY'
