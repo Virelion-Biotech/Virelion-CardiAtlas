@@ -20,6 +20,7 @@ from .harvester import HarvestBatch, harvest_plan, harvest_target
 from .harvest_manifest import HarvestManifest, create_harvest_manifest
 from .harvest_qc import HarvestQC, assess_harvest
 from .harvest_store import read_harvest, write_harvest
+from .httpd import DEFAULT_PORT, build_server, serve
 from .identifiers import IdentifierResolution, resolve as resolve_identifier
 from .integrations import BenchmarkCandidate, benchmark_readiness, dataset_to_benchmark_candidate
 from .loader import load_into_registry, read_bundle, record_from_dict
@@ -47,18 +48,18 @@ from .study_readiness import StudyBenchmarkReadiness, assess_study_benchmark_rea
 __all__ = [
     "AcquisitionTarget", "AtlasAPI", "AtlasContext", "AtlasGraph", "AtlasRecord", "AtlasRegistry", "AtlasService",
     "BenchmarkCandidate", "CatalogGroup", "CellStateRecord", "Claim", "ClaimAssessment", "ClaimStore", "Concept",
-    "CorpusReport", "DatasetRecord", "EvidenceRecord", "EvidenceScore", "GeoReconstructionBundle", "GeoSoftSample", "HarvestBatch", "HarvestItem", "HarvestManifest", "HarvestQC", "HarmonizedValue", "IdentifierResolution",
+    "CorpusReport", "DatasetRecord", "DEFAULT_PORT", "EvidenceRecord", "EvidenceScore", "GeoReconstructionBundle", "GeoSoftSample", "HarvestBatch", "HarvestItem", "HarvestManifest", "HarvestQC", "HarmonizedValue", "IdentifierResolution",
     "InterventionRecord", "MarkerRecord", "PhenotypeRecord", "PromotionDecision", "ProvenanceBundle", "ProvenanceEvent", "Query", "QueryHit",
     "QualityReport", "ReconstructionDecision", "ReconstructionReport", "ReferenceBuild", "Relation", "RELEASE_STATES", "ReleaseCheck", "ReleaseManifest", "ReleaseReadiness", "ReleaseRecord", "RetrievalResult",
     "SampleRecord", "SnapshotDiff", "SourceResult", "SQLiteAtlasStore", "StateTransition", "StudyBenchmarkReadiness", "StudyQC", "StudyRecord", "acquisition_plan",
-    "assess_dataset", "assess_harvest", "assess_release", "assess_study", "assess_study_benchmark_readiness", "attach_datasets", "audit_datasets", "benchmark_readiness", "build_reference",
+    "assess_dataset", "assess_harvest", "assess_release", "assess_study", "assess_study_benchmark_readiness", "attach_datasets", "audit_datasets", "benchmark_readiness", "build_reference", "build_server",
     "canonical_concept_id", "canonical_digest", "canonical_key", "concepts_by_category", "context_from_dict", "corpus_report", "create_draft", "create_harvest_manifest", "create_manifest",
     "dataset_to_benchmark_candidate", "decide_promotion", "deduplicate_harvest", "deprecate", "descendants", "diff_records", "digest_records", "graph_context", "group_datasets",
     "harvest_plan", "harvest_report", "harvest_target", "harmonize_condition", "harmonize_label", "harmonize_modality", "ingest_sample_rows",
     "ingest_source", "load_into_registry", "migrate_payload", "migrate_records", "neighborhood_retrieve", "normalize_accession", "normalize_gene_symbol",
     "normalize_label", "normalize_species", "parse_geo_soft", "parse_geo_soft_bytes", "plan_as_dict", "populate_registry", "promote_records", "promote_to_candidate", "query_registry", "read_bundle", "read_harvest", "reconstruct_geo_accession", "reconstruct_geo_series", "reconstruct_samples", "reconstruct_study", "record_from_dict", "release_record_from_dict",
-    "resolve_concept", "resolve_identifier", "retrieve", "sample_from_metadata", "samples_to_rows", "score_evidence", "search", "search_records", "study_from_datasets", "verify_digest", "verify_release", "write_geo_bundle", "write_harvest",
+    "resolve_concept", "resolve_identifier", "retrieve", "sample_from_metadata", "samples_to_rows", "score_evidence", "search", "search_records", "serve", "study_from_datasets", "verify_digest", "verify_release", "write_geo_bundle", "write_harvest",
     "write_cardiBench_candidates", "write_records", "write_release",
 ]
 
-__version__ = "0.7.0"
+__version__ = "0.8.1"
