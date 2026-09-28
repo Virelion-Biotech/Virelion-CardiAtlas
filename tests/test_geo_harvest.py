@@ -44,3 +44,8 @@ def test_geo_bundle_records_source_digest_and_readiness(tmp_path: Path):
     assert (tmp_path / "study.json").exists()
     assert (tmp_path / "samples.jsonl").exists()
     assert (tmp_path / "report.json").exists()
+
+
+def test_early_series_uses_gsennn_bucket():
+    from cardiatlas.ncbi import NcbiClient
+    assert NcbiClient.geo_family_soft_url("GSE1") == "https://ftp.ncbi.nlm.nih.gov/geo/series/GSEnnn/GSE1/soft/GSE1_family.soft.gz"
