@@ -104,6 +104,17 @@ def test_request_local_records_overlay_without_mutating_server(running_server):
     assert body["count"] == 0
 
 
+def test_missing_context_records_are_explicit_not_provenance(running_server):
+    status, body = _post(
+        f"{running_server}/v1/atlas/context",
+        {"record_ids": ["marker:postn", "evidence:missing"]},
+    )
+    assert status == 200
+    assert body["record_ids"] == ["marker:postn", "evidence:missing"]
+    assert body["provenance"] == ["marker:postn"]
+    assert body["context"]["metadata"] == {"missing_record_ids": ["evidence:missing"]}
+
+
 def test_missing_record_ids_yields_explicit_empty_context(running_server):
     status, body = _post(f"{running_server}/v1/atlas/context", {"entity_id": "sample-1"})
     assert status == 200
