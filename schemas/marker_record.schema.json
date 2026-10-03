@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/marker_record.schema.json",
+  "title": "CardiAtlas Marker Record",
+  "type": "object",
+  "required": [
+    "id",
+    "record_type",
+    "name"
+  ],
+  "properties": {
+    "cell_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confidence": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "direction": {
+      "enum": [
+        "up",
+        "down",
+        "context_dependent",
+        "unknown"
+      ]
+    },
+    "entity_id": {
+      "type": "string"
+    },
+    "entity_type": {
+      "enum": [
+        "gene",
+        "protein",
+        "metabolite",
+        "feature"
+      ]
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "id": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "modalities": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "bulk_rna",
+          "scrna",
+          "snrna",
+          "proteomics",
+          "imaging",
+          "ecg",
+          "physiology",
+          "clinical",
+          "literature",
+          "other"
+        ]
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "record_type": {
+      "const": "marker"
+    },
+    "role": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "species": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "states": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

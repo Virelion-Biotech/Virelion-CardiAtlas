@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/evidence_record.schema.json",
+  "title": "CardiAtlas Evidence Record",
+  "type": "object",
+  "required": [
+    "id",
+    "record_type",
+    "name"
+  ],
+  "properties": {
+    "assay": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "citation": {
+      "type": "string"
+    },
+    "context": {
+      "type": "object"
+    },
+    "description": {
+      "type": "string"
+    },
+    "evidence_level": {
+      "enum": [
+        "primary",
+        "review",
+        "database",
+        "inferred",
+        "curated"
+      ]
+    },
+    "extracted_claim": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "name": {
+      "type": "string"
+    },
+    "organism": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "polarity": {
+      "enum": [
+        "supports",
+        "refutes",
+        "mixed",
+        "unknown"
+      ]
+    },
+    "record_type": {
+      "const": "evidence"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "source_identifier": {
+      "type": "string"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_type": {
+      "enum": [
+        "pubmed",
+        "doi",
+        "geo",
+        "sra",
+        "arrayexpress",
+        "clinical",
+        "other"
+      ]
+    },
+    "source_url": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tissue": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "year": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  }
+}

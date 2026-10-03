@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/sample_record.schema.json",
+  "title": "CardiAtlas Sample Record",
+  "type": "object",
+  "required": [
+    "id",
+    "record_type",
+    "name"
+  ],
+  "properties": {
+    "accession": {
+      "type": "string"
+    },
+    "cell_context": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "condition": {
+      "type": "string"
+    },
+    "dataset_id": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "is_technical_replicate": {
+      "type": "boolean"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "metadata_quality": {
+      "type": "string"
+    },
+    "modality": {
+      "enum": [
+        "bulk_rna",
+        "scrna",
+        "snrna",
+        "proteomics",
+        "imaging",
+        "ecg",
+        "physiology",
+        "clinical",
+        "literature",
+        "other"
+      ]
+    },
+    "name": {
+      "type": "string"
+    },
+    "record_type": {
+      "const": "sample"
+    },
+    "region": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "replicate_group": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "species": {
+      "type": "string"
+    },
+    "study_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "subject_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "timepoint": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tissue": {
+      "type": "string"
+    }
+  }
+}

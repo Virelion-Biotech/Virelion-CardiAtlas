@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Virelion-Biotech/Virelion-CardiAtlas/schemas/concept.schema.json",
+  "title": "CardiAtlas Concept",
+  "type": "object",
+  "required": ["id", "label", "category", "synonyms", "parent_id"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "label": {"type": "string", "minLength": 1},
+    "category": {"type": "string", "enum": ["cell_type", "cell_state", "phenotype", "process"]},
+    "synonyms": {"type": "array", "items": {"type": "string"}},
+    "parent_id": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

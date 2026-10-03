@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CardiAtlas Claim",
+  "type": "object",
+  "required": ["id", "subject", "predicate", "object", "polarity", "evidence_ids"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "predicate": {"type": "string", "minLength": 1},
+    "object": {"type": "string", "minLength": 1},
+    "polarity": {"enum": ["supports", "refutes", "mixed", "unknown"]},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "notes": {"type": "string"}
+  },
+  "additionalProperties": false
+}

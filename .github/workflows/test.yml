@@ -1,0 +1,118 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install package and test dependencies
+        run: python -m pip install --upgrade pip && pip install -e '.[test]'
+      - name: Compile package
+        run: python -m compileall -q cardiatlas tests
+      - name: Check generated JSON schemas are in sync with models
+        run: python scripts/generate_json_schemas.py --check
+      - name: Run tests
+        run: pytest -q
+      - name: Smoke-test CLI
+        run: |
+          cardiatlas ontology --category phenotype > /tmp/phenotypes.json
+          cardiatlas identifier TNNT2 > /tmp/identifier.json
+          cardiatlas harvest --domain myocardial_infarction --plan-only > /tmp/plan.json
+          cardiatlas corpus > /tmp/corpus.json
+          python -m json.tool /tmp/phenotypes.json >/dev/null
+          python -m json.tool /tmp/identifier.json >/dev/null
+          python -m json.tool /tmp/plan.json >/dev/null
+          python -m json.tool /tmp/corpus.json >/dev/null
+      - name: Build checked-in reference Atlas
+        run: cardiatlas build-reference --version "ci"
+      - name: Exercise GEO reconstruction CLI
+        run: |
+          cat > /tmp/dataset.json <<'EOF'
+          {"id":"dataset:GSETEST","record_type":"dataset","name":"GSETEST","accession":"GSETEST","repository":"GEO","study_title":"CI cardiac study","organism":"Sus scrofa","tissue":"heart","schema_version":"0.3"}
+          EOF
+          cat > /tmp/samples.csv <<'EOF'
+          accession,group,subject_id,timepoint,modality,region
+          GSMTEST1,MI,pig-1,P35,snRNA-seq,infarct
+          GSMTEST2,sham,pig-2,P35,snRNA-seq,remote
+          EOF
+          cardiatlas reconstruct-study /tmp/dataset.json /tmp/samples.csv --output /tmp/reconstructed
+          test -s /tmp/reconstructed/study.json
+          test -s /tmp/reconstructed/samples.jsonl
+          test -s /tmp/reconstructed/report.json
+      - name: Exercise release lifecycle CLI
+        run: |
+          rm -f /tmp/lifecycle.sqlite
+          python - <<'PY'
+          from cardiatlas.sqlite import SQLiteAtlasStore
+          from cardiatlas.models import EvidenceRecord, DatasetRecord
+          from cardiatlas.graph import Relation
+
+          with SQLiteAtlasStore("/tmp/lifecycle.sqlite") as store:
+              evidence = EvidenceRecord(id="evidence:e1", name="Some paper", source_type="pubmed", source_identifier="12345678")
+              dataset = DatasetRecord(id="dataset:geo:GSE1", name="GSE1", accession="GSE1", repository="GEO", evidence_ids=[evidence.id], source_ids=[evidence.id])
+              store.upsert_many([evidence, dataset])
+              store.put_relation(Relation(subject=dataset.id, predicate="derived_from", object=evidence.id, evidence_ids=(evidence.id,), confidence=0.9, source="ci"))
+          PY
+          cardiatlas release stage /tmp/lifecycle.sqlite --version ci.0.0
+          cardiatlas release promote /tmp/lifecycle.sqlite ci.0.0
+          cardiatlas release verify /tmp/lifecycle.sqlite ci.0.0 --commit "$GITHUB_SHA" --ci-passed
+          cardiatlas release show /tmp/lifecycle.sqlite ci.0.0 | python -c "import json,sys; d=json.load(sys.stdin); assert d['state']=='verified', d"
+          cardiatlas release list /tmp/lifecycle.sqlite --state verified > /dev/null
+      - name: Exercise persistent-store CLI (load/corpus/search/context/export)
+        run: |
+          rm -f /tmp/atlas.sqlite
+          cardiatlas load /tmp/atlas.sqlite data/examples/atlas.jsonl data/examples/markers.jsonl data/examples/phenotypes.jsonl data/reference/cardiBench_evidence.jsonl data/reference/cardiac_datasets.jsonl --relations data/reference/core_relationships.jsonl
+          cardiatlas corpus --db /tmp/atlas.sqlite | python -c "import json,sys; d=json.load(sys.stdin); assert d['record_count'] == 13, d"
+          cardiatlas search /tmp/atlas.sqlite "cardiac fibrosis" --limit 5 > /tmp/search.json
+          test -s /tmp/search.json
+          cardiatlas context /tmp/atlas.sqlite marker:postn --hops 1 | python -c "import json,sys; d=json.load(sys.stdin); assert d['neighbors'], d"
+          cardiatlas release-check --db /tmp/atlas.sqlite | python -c "import json,sys; d=json.load(sys.stdin); assert d['passed'], d"
+          cardiatlas export /tmp/atlas.sqlite /tmp/export.jsonl
+          test "$(wc -l < /tmp/export.jsonl)" -eq 13
+          cardiatlas export /tmp/atlas.sqlite /tmp/export_release.json --release-version 1.0.0
+          python -c "import json; d=json.load(open('/tmp/export_release.json')); assert d['manifest']['version'] == '1.0.0', d"
+          cardiatlas export /tmp/atlas.sqlite /tmp/candidates.json --benchmark-candidates
+          test -s /tmp/candidates.json
+      - name: Exercise HeartTwin HTTP surface (cardiatlas serve)
+        run: |
+          cardiatlas serve /tmp/atlas.sqlite --port 8420 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          sleep 1
+          curl -sf http://127.0.0.1:8420/health | python -c "import json,sys; d=json.load(sys.stdin); assert d['record_count'] == 13, d"
+          curl -sf -H 'Content-Type: application/json' -X POST http://127.0.0.1:8420/v1/atlas/search -d '{"query":"cardiac fibrosis","limit":3}' | python -c "import json,sys; d=json.load(sys.stdin); assert d['count'] > 0 and d['records'], d"
+          curl -sf -H 'Content-Type: application/json' -X POST http://127.0.0.1:8420/v1/atlas/context -d '{"record_ids":["marker:postn"]}' | python -c "import json,sys; d=json.load(sys.stdin); assert d['context']['marker_ids'] == ['marker:postn'], d"
+          kill $SERVER_PID
+          trap - EXIT
+      - name: Exercise GEO SOFT parser
+        run: |
+          python - <<'PY'
+          from cardiatlas.geo_soft import parse_geo_soft, samples_to_rows
+          text = '''
+          ^SERIES = GSE999999
+          ^SAMPLE = GSM1000001
+          !Sample_title = MI sample
+          !Sample_geo_accession = GSM1000001
+          !Sample_organism_ch1 = Mus musculus
+          !Sample_source_name_ch1 = heart
+          !Sample_characteristics_ch1 = condition: MI
+          !Sample_characteristics_ch1 = animal_id: mouse01
+          !Sample_characteristics_ch1 = timepoint: 7 dpi
+          !Sample_characteristics_ch1 = region: infarct zone
+          '''
+          rows = samples_to_rows(parse_geo_soft(text))
+          assert rows[0]['accession'] == 'GSM1000001'
+          assert rows[0]['condition'] == 'MI'
+          assert rows[0]['animal_id'] == 'mouse01'
+          PY

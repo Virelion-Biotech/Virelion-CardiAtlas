@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/study_record.schema.json",
+  "title": "CardiAtlas Study Record",
+  "type": "object",
+  "required": [
+    "id",
+    "record_type",
+    "name"
+  ],
+  "properties": {
+    "accession": {
+      "type": "string"
+    },
+    "dataset_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "design": {
+      "type": "string"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "id": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "modalities": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "bulk_rna",
+          "scrna",
+          "snrna",
+          "proteomics",
+          "imaging",
+          "ecg",
+          "physiology",
+          "clinical",
+          "literature",
+          "other"
+        ]
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "organism": {
+      "type": "string"
+    },
+    "publication_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "record_type": {
+      "const": "study"
+    },
+    "repository": {
+      "enum": [
+        "GEO",
+        "SRA",
+        "ArrayExpress",
+        "dbGaP",
+        "other"
+      ]
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tissues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "title": {
+      "type": "string"
+    }
+  }
+}

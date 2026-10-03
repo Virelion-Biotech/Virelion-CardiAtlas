@@ -1,0 +1,43 @@
+{
+  "manifest_version": "1.0",
+  "purpose": "Reproducible public cardiac evidence and dataset acquisition plan",
+  "sources": [
+    {
+      "id": "pubmed",
+      "kind": "literature",
+      "access": "public_metadata",
+      "adapter": "cardiatlas.harvester",
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/",
+      "notes": "Metadata acquisition only; source articles remain hosted by their publishers or repositories."
+    },
+    {
+      "id": "geo",
+      "kind": "dataset_registry",
+      "access": "public_metadata",
+      "adapter": "cardiatlas.harvester",
+      "source_url": "https://www.ncbi.nlm.nih.gov/geo/",
+      "notes": "Registry metadata first; raw expression matrices are not downloaded by the core harvest command."
+    },
+    {
+      "id": "sra",
+      "kind": "sequencing_registry",
+      "access": "metadata_discovery",
+      "adapter": "planned",
+      "source_url": "https://www.ncbi.nlm.nih.gov/sra/",
+      "notes": "Candidate source for future sample/run-level metadata reconciliation."
+    }
+  ],
+  "quality_rules": {
+    "unknown_condition": "retain_unknown",
+    "ambiguous_identifier": "retain_with_provenance",
+    "duplicate_source_record": "deduplicate_by_source_and_external_id",
+    "missing_provenance": "block_release",
+    "raw_data_download": "explicit_opt_in_only"
+  },
+  "release_policy": {
+    "metadata_only_default": true,
+    "source_timestamp_required": true,
+    "canonical_digest_required": true,
+    "sample_level_reconciliation_required_for_benchmark": true
+  }
+}

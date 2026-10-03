@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/intervention_record.schema.json",
+  "title": "CardiAtlas Intervention Record",
+  "type": "object",
+  "required": [
+    "id",
+    "record_type",
+    "name"
+  ],
+  "properties": {
+    "context": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "id": {
+      "type": "string"
+    },
+    "intervention_type": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "name": {
+      "type": "string"
+    },
+    "observed_outcomes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "phenotype_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "record_type": {
+      "const": "intervention"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "target": {
+      "type": "string"
+    }
+  }
+}

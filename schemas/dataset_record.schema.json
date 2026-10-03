@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/dataset_record.schema.json",
+  "title": "CardiAtlas Dataset Record",
+  "type": "object",
+  "required": [
+    "id",
+    "record_type",
+    "name"
+  ],
+  "properties": {
+    "accession": {
+      "type": "string"
+    },
+    "cell_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "cell_or_nucleus": {
+      "enum": [
+        "cell",
+        "nucleus",
+        "bulk",
+        "mixed",
+        "unknown"
+      ]
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "id": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "modalities": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "bulk_rna",
+          "scrna",
+          "snrna",
+          "proteomics",
+          "imaging",
+          "ecg",
+          "physiology",
+          "clinical",
+          "literature",
+          "other"
+        ]
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "organism": {
+      "type": "string"
+    },
+    "quality_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "record_type": {
+      "const": "dataset"
+    },
+    "region": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "release_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "repository": {
+      "enum": [
+        "GEO",
+        "SRA",
+        "ArrayExpress",
+        "dbGaP",
+        "other"
+      ]
+    },
+    "sample_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_url": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "study_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "study_title": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "timepoints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tissue": {
+      "type": "string"
+    }
+  }
+}
