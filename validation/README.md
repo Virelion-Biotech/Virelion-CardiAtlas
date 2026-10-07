@@ -57,3 +57,5 @@ GSE153480's donor/animal structure remains unresolved. Eight GEO samples do not 
 No expert ontology gold standard, independently annotated claim corpus, retrieval relevance cohort, held-out donor dataset or clinical validation was established. Bibliographic agreement does not validate biological claims, marker specificity, effect sizes, therapeutic relevance or HeartTwin model predictions. Metadata eligibility does not prove statistical power or leakage-free split feasibility. The release `verified` state relies on caller-supplied CI information and does not independently certify source truth.
 
 Historical parser-v1 outputs and legacy lifecycle snapshots should be regenerated/re-staged before downstream use. The source distribution includes reference/validation assets; the library wheel deliberately contains the library, so reference builds need `--root` pointing at repository or extracted source assets.
+
+Implementation commit: `bc48dc3688fd305bf06b18cff1a65754183bb07c` (recorded before the documentation provenance commit).
