@@ -26,6 +26,8 @@ class GeoSoftSample:
             "library_selection": self.fields.get("Sample_library_selection", ""),
         }
         row.update(self.characteristics)
+        row["accession"] = self.accession
+        row["name"] = self.fields.get("Sample_title", self.accession)
         row["geo_accession"] = self.accession
         row["raw_fields"] = dict(self.raw)
         return row
@@ -54,6 +56,7 @@ def _characteristic_value(key: str, value: str) -> tuple[str, str] | None:
         "group": "condition",
         "disease": "condition",
         "disease_state": "condition",
+        "surgery_type": "condition",
         "phenotype": "condition",
         "treatment": "treatment",
         "timepoint": "timepoint",
@@ -64,6 +67,7 @@ def _characteristic_value(key: str, value: str) -> tuple[str, str] | None:
         "day": "timepoint",
         "days_post_injury": "timepoint",
         "days_post_infarction": "timepoint",
+        "sample_collected_at_post_surgical_day": "timepoint",
         "region": "region",
         "heart_region": "region",
         "tissue_region": "region",
@@ -134,6 +138,7 @@ def parse_geo_soft(text: str) -> list[GeoSoftSample]:
         if not line or line.startswith("!series_matrix"):
             continue
         if line.startswith("^PLATFORM") or line.startswith("^SERIES") or line.startswith("^DATABASE"):
+            flush()
             continue
         if line.startswith("^SAMPLE"):
             flush()
@@ -153,8 +158,8 @@ def parse_geo_soft(text: str) -> list[GeoSoftSample]:
                 _merge_characteristic(characteristics, char_key, char_value)
         elif key.startswith("!Sample_"):
             clean_key = key[len("!Sample_"):]
-            fields.setdefault(f"Sample_{clean_key}", value)
-        raw[key] = value
+            _merge_characteristic(fields, f"Sample_{clean_key}", value)
+        _merge_characteristic(raw, key, value)
     flush()
     return samples
 

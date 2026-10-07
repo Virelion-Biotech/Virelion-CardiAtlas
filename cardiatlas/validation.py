@@ -1,10 +1,36 @@
 from __future__ import annotations
 
 from dataclasses import fields, is_dataclass
-from typing import Any
+from typing import Any, Literal, Union, get_args, get_origin, get_type_hints
+from types import UnionType
+from functools import lru_cache
+
+from .jsonutil import validate_json
 
 from .models import AtlasRecord, DatasetRecord, SampleRecord, StudyRecord
 from .schema import RECORD_TYPES, SCHEMA_VERSION
+
+
+@lru_cache(maxsize=None)
+def _hints(cls):
+    return get_type_hints(cls)
+
+
+def _matches(value, annotation):
+    origin, args = get_origin(annotation), get_args(annotation)
+    if annotation is Any:
+        return True
+    if origin in (Union, UnionType):
+        return any(_matches(value, item) for item in args)
+    if origin is Literal:
+        return any(type(value) is type(item) and value == item for item in args)
+    if origin is list:
+        return isinstance(value, list) and all(_matches(item, args[0]) for item in value)
+    if origin is dict:
+        return isinstance(value, dict) and all(_matches(k, args[0]) and _matches(v, args[1]) for k, v in value.items())
+    if annotation is float:
+        return type(value) in (int, float)
+    return type(value) is annotation
 
 
 def validate_record(record: AtlasRecord) -> list[str]:
@@ -12,6 +38,18 @@ def validate_record(record: AtlasRecord) -> list[str]:
     errors: list[str] = []
     if not is_dataclass(record):
         return ["record must be a dataclass instance"]
+    if not isinstance(record, AtlasRecord):
+        return ["record must be an AtlasRecord instance"]
+    hints = _hints(type(record))
+    for field in fields(record):
+        if not _matches(getattr(record, field.name), hints[field.name]):
+            errors.append(f"{field.name} has an invalid type or controlled value")
+    try:
+        validate_json(record.to_dict())
+    except ValueError as exc:
+        errors.append(str(exc))
+    if errors:
+        return errors
     if not record.id.strip():
         errors.append("id must be non-empty")
     if not record.name.strip():

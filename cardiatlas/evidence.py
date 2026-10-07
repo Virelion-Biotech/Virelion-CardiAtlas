@@ -25,7 +25,14 @@ class EvidenceScore:
 
 
 def score_evidence(records: Iterable[EvidenceRecord]) -> EvidenceScore:
-    values = list(records)
+    unique = {}
+    for item in records:
+        # Source-record counts are heuristic, not independent experiments.
+        key = (item.source_type, item.source_identifier.strip().lower()) if item.source_identifier.strip() else ("record", item.id)
+        existing = unique.get(key)
+        if existing is None or _LEVEL_WEIGHT.get(item.evidence_level, 0.5) < _LEVEL_WEIGHT.get(existing.evidence_level, 0.5):
+            unique[key] = item
+    values = list(unique.values())
     if not values:
         return EvidenceScore(0.0, 0, 0, 0)
     weighted = sum(_LEVEL_WEIGHT.get(item.evidence_level, 0.5) for item in values)

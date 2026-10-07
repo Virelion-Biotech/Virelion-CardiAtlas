@@ -66,3 +66,9 @@ GEO annotations are observations about how a submitter described a sample. Cardi
 ## Downstream use
 
 CardiBench can consume the bundle's normalized study/sample objects and readiness gate instead of implementing a second GEO reconstruction path. CardiLearn and CardiVex can consume the same objects while retaining sample-level provenance and subject/group structure.
+
+## Parser v2 interpretation
+
+GEO `RNA-Seq` describes sequencing strategy and alone cannot distinguish bulk RNA from scRNA/snRNA. Reconstruction accepts an explicit modality field or unambiguous scRNA/snRNA/bulk RNA title; otherwise it records `other` and blocks recognized-modality readiness. Source keys and raw metadata are retained. Repeated characteristics are preserved; conflicting/pool-like subject values require review and cannot count as explicit donors. `surgery type` and `sample collected at post surgical day` map to condition and timepoint, while developmental age remains separate raw metadata. Sham/control/healthy map to a broad reference category with original labels retained; this is not permission to pool biologically different controls.
+
+The live GSE153480 audit identifies eight scRNA samples and MI/sham day-1/day-3 groups, with zero explicit biological subjects. Sample accessions and titles must not be substituted for animal IDs. Rebuild prior snapshots made by parser v1 and review assay differences before downstream analysis.

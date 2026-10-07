@@ -13,6 +13,7 @@ from .registry import AtlasRegistry
 from .release import create_manifest
 from .release_lifecycle import ReleaseRecord, release_record_from_dict
 from .schema import SCHEMA_VERSION
+from .validation import require_valid
 from .service import AtlasService
 
 
@@ -60,6 +61,7 @@ class SQLiteAtlasStore:
         self._connection.commit()
 
     def upsert(self, record: Record) -> None:
+        require_valid(record)
         payload = json.dumps(record.to_dict(), sort_keys=True, ensure_ascii=False)
         self._connection.execute(
             "INSERT INTO records(id, record_type, name, payload) VALUES(?,?,?,?) "
@@ -69,6 +71,7 @@ class SQLiteAtlasStore:
         self._connection.commit()
 
     def upsert_many(self, records: Iterable[Record]) -> int:
+        records = [require_valid(record) for record in records]
         rows = [(record.id, record.record_type, record.name, json.dumps(record.to_dict(), sort_keys=True, ensure_ascii=False)) for record in records]
         self._connection.executemany(
             "INSERT INTO records(id, record_type, name, payload) VALUES(?,?,?,?) "
@@ -79,6 +82,7 @@ class SQLiteAtlasStore:
         return len(rows)
 
     def put_relation(self, relation: Relation) -> None:
+        AtlasGraph([relation])  # validate before any persistent mutation
         # Mirror AtlasGraph.add()'s merge semantics: a relation persisted twice
         # for the same (subject, predicate, object) should accumulate evidence
         # rather than have the later write silently discard the earlier one.

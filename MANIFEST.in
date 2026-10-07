@@ -1,0 +1,7 @@
+recursive-include data *.json *.jsonl *.yaml
+recursive-include schemas *.json
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include validation *.py *.json *.md *.soft
+recursive-include docs *.md
+exclude validation/ci-*.json

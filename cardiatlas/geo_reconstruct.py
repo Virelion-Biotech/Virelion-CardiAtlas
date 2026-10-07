@@ -6,7 +6,7 @@ from typing import Iterable, Mapping
 
 from .harmonize import harmonize_condition, harmonize_modality
 from .models import DatasetRecord, SampleRecord, StudyRecord
-from .normalize import canonical_key, normalize_species
+from .normalize import canonical_key, normalize_species, is_missing_metadata
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,7 +58,7 @@ class ReconstructionReport:
 def _first(row: Mapping[str, object], keys: tuple[str, ...]) -> tuple[str, str]:
     for key in keys:
         value = row.get(key)
-        if value is not None and str(value).strip():
+        if value is not None and not _null_like(str(value)):
             return str(value).strip(), key
     return "", ""
 
@@ -69,13 +69,26 @@ def _subject_from_accession(accession: str) -> str | None:
 
 
 def _null_like(value: str) -> bool:
-    return value.strip().lower() in {"", "-", "/", "missing", "n/a", "na", "none", "not applicable", "null"}
+    return is_missing_metadata(value)
 
 
 def _modality_value(row: Mapping[str, object]) -> tuple[str, str]:
-    # GEO explicitly defines library strategy as the sequencing strategy field;
-    # prefer it over platform labels because a platform can host multiple assays.
-    return _first(row, ("modality", "library_strategy", "assay", "library_type", "platform"))
+    explicit, key = _first(row, ("modality", "assay", "library_type"))
+    if explicit:
+        return explicit, key
+    strategy, key = _first(row, ("library_strategy",))
+    # GEO RNA-Seq describes sequencing strategy, not cell versus nucleus versus bulk.
+    # Accept an explicit assay label in the sample title; preserve its provenance.
+    title, title_key = _first(row, ("name", "title"))
+    patterns = ((r"\bsnrna[ _-]?seq\b|single[ -]nucle(?:us|i) rna", "snRNA-seq"),
+                (r"\bscrna[ _-]?seq\b|single[ -]cell rna", "scRNA-seq"),
+                (r"\bbulk[ _-]rna", "bulk RNA-seq"))
+    matches = [label for pattern, label in patterns if re.search(pattern, title.replace("_", " "), re.I)]
+    if len(matches) == 1:
+        return matches[0], title_key
+    if strategy and canonical_key(strategy) != "rna_seq":
+        return strategy, key
+    return "other", "ambiguous_library_strategy" if strategy else "default"
 
 
 def reconstruct_samples(
@@ -105,9 +118,12 @@ def reconstruct_samples(
         decisions.append(ReconstructionDecision("modality", raw_modality, modality.normalized, modality.confidence, modality_key))
 
         raw_subject, subject_key = _first(row, ("subject_id", "donor_id", "animal_id", "individual_id", "patient_id"))
-        subject = None if _null_like(raw_subject) else raw_subject
+        subject = None if _null_like(raw_subject) or " | " in raw_subject else raw_subject
+        subject_ambiguous = " | " in raw_subject
+        if subject_ambiguous:
+            warnings.append(f"{accession}: conflicting or pooled subject metadata requires review")
         subject_inferred = False
-        if subject is None:
+        if subject is None and not subject_ambiguous:
             subject = _subject_from_accession(accession)
             subject_inferred = subject is not None
         if subject:

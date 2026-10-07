@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .models import Record
-from .normalize import canonical_key, normalize_label
+from .normalize import normalize_label
 from .registry import AtlasRegistry
 
 
@@ -21,7 +21,6 @@ def _score(record: Record, terms: list[str]) -> tuple[int, int, str, str]:
         str(record.metadata),
     ]
     normalized_fields = [normalize_label(value) for value in searchable]
-    key_blob = canonical_key(" ".join(searchable))
     for term in terms:
         normalized = normalize_label(term)
         if any(normalized == field for field in normalized_fields):

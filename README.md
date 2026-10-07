@@ -2,6 +2,10 @@
 
 CardiAtlas is a Python library for representing and retrieving cardiac biomedical metadata, evidence, phenotypes, datasets, studies, samples, and provenance.
 
+## CPU audit (0.9.0)
+
+142 local tests pass with 82.10% coverage. All 21 reference records pass runtime and JSON Schema validation. Reproducible source checks validate eight live GSE153480 samples and the bibliographic identity of six optical references. **GSE153480 still lacks explicit subject IDs and remains blocked for benchmark readiness.** Core graph citations and biological claim correctness remain incomplete. See the [audit and limits](validation/README.md).
+
 ## What it contains
 
 - Typed records for studies, datasets, samples, markers, phenotypes, interventions, evidence, and claims.
@@ -94,7 +98,7 @@ cardiatlas release list atlas.sqlite --state verified
 cardiatlas release deprecate atlas.sqlite 1.2.0 --superseded-by 1.3.0
 ```
 
-Every transition re-derives the release's digest from what's currently in the store and refuses to proceed if it no longer matches what was staged -- so a `verified` release always reflects an exact, unchanged record set. `verify` also requires an explicit commit SHA and confirmed CI status from the caller, since CardiAtlas has no way to observe either fact on its own.
+Every promotion/verification re-derives the release's record digest and separate relationship digest from what's currently in the store and refuses to proceed if it no longer matches what was staged -- so a `verified` release always reflects an exact, unchanged record and relationship set. Legacy lifecycle records without a relationship digest must be restaged. `verify` also requires an explicit commit SHA and confirmed CI status from the caller, since CardiAtlas has no way to observe either fact on its own.
 
 ## Other CLI commands
 
@@ -121,6 +125,8 @@ Unknown metadata remain unknown; normalization retains confidence and provenance
 ## Validation
 
 Automated checks cover schema integrity, identifiers, duplicate accessions, provenance, controlled relationship predicates, benchmark-readiness, release state, and metadata completeness (docs/release-checklist.md). Tests cover the public API and regression behavior, and CI checks that `schemas/*.json` hasn't drifted from `cardiatlas.models` (`scripts/generate_json_schemas.py --check`). Passing validation does not establish biological correctness; ontology mappings and scientific interpretation require review.
+
+Reference bundles, schemas and validation fixtures live in the repository and source distribution; they are not embedded in the library wheel. Run `build-reference --root <repository-or-extracted-source-root>` against those files. A missing bundle fails explicitly.
 
 ## Limitations
 

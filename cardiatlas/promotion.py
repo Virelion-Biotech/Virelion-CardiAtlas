@@ -5,7 +5,6 @@ from typing import Iterable
 
 from .harvest import HarvestItem
 from .models import DatasetRecord, EvidenceRecord, Record
-from .normalize import canonical_key
 from .validation import validate_record
 
 

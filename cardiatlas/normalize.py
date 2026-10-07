@@ -67,3 +67,10 @@ def normalize_species(value: str) -> str:
     }
     cleaned = normalize_label(value)
     return aliases.get(cleaned, value.strip())
+
+
+def is_missing_metadata(value: str | None) -> bool:
+    return value is None or value.strip().lower() in {
+        '', '-', '/', 'missing', 'n/a', 'na', 'none', 'not applicable', 'null',
+        'unknown', 'not provided', 'not reported', 'unavailable', 'not known',
+    }

@@ -73,9 +73,9 @@ class ClaimStore:
         refuting: list[str] = []
         mixed: list[str] = []
         unknown: list[str] = []
-        for evidence_id in claim.evidence_ids:
+        for evidence_id in dict.fromkeys(claim.evidence_ids):
             item = evidence.get(evidence_id) if evidence else None
-            polarity = item.polarity if item else claim.polarity
+            polarity = item.polarity if item else (claim.polarity if evidence is None else "unknown")
             if polarity == "supports":
                 supporting.append(evidence_id)
             elif polarity == "refutes":

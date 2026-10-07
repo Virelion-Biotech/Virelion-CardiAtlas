@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass
 from typing import Iterable
 
 from .schema import RELATION_TYPES
+from .jsonutil import validate_json
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +32,13 @@ class AtlasGraph:
             self.add(relation)
 
     def add(self, relation: Relation) -> None:
+        if not all(isinstance(value, str) and value.strip() for value in (relation.subject, relation.predicate, relation.object)):
+            raise ValueError("relationship endpoints and predicate must be nonempty strings")
+        if not isinstance(relation.evidence_ids, tuple) or not all(isinstance(value, str) and value for value in relation.evidence_ids):
+            raise ValueError("relationship evidence_ids must be a tuple of nonempty strings")
+        validate_json(relation.to_dict())
+        if isinstance(relation.confidence, bool):
+            raise ValueError("relationship confidence must be numeric, not boolean")
         if not relation.subject or not relation.predicate or not relation.object:
             raise ValueError("subject, predicate, and object are required")
         if relation.predicate not in RELATION_TYPES:

@@ -42,7 +42,7 @@ def test_reconstruction_uses_library_strategy_and_null_condition_rules():
     records, report = reconstruct_samples(rows, dataset_id="dataset:geo:GSETEST", study_id="study:GSETEST")
     assert records[0].modality == "snrna"
     assert records[0].condition == "myocardial_infarction"
-    assert records[1].modality == "bulk_rna"
+    assert records[1].modality == "other"  # RNA-Seq alone does not distinguish bulk from single cell
     assert records[1].condition == ""
     assert "myocardial_infarction" in report.condition_groups
     assert "some samples lack condition metadata" in report.warnings

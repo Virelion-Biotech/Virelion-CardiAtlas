@@ -27,7 +27,6 @@ def test_checked_in_schemas_match_current_models():
 
 
 def test_generated_schema_covers_every_model_field():
-    from cardiatlas import models
     for stem, cls in generate_json_schemas._MODEL_FOR_STEM.items():
         schema = generate_json_schemas.schema_for(stem)
         model_field_names = {f.name for f in __import__("dataclasses").fields(cls)}

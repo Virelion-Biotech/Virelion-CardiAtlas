@@ -6,7 +6,8 @@ the mutable lifecycle layered on top of them -- draft -> candidate ->
 verified -> deprecated -- without changing what a release's digest attests
 to: promoting or deprecating a release never touches canonical_payload() or
 digest_records(), so the digest always means exactly one thing, the exact
-record content, regardless of the release's current state.
+record content, regardless of the release's current state. A separate
+relationship_digest locks graph content during lifecycle transitions.
 
 State meanings (docs/release-checklist.md):
   draft      internally generated; may contain unresolved provenance or
@@ -28,7 +29,7 @@ from typing import Iterable
 
 from .graph import Relation
 from .models import Record
-from .release import ReleaseManifest, create_manifest, digest_records
+from .release import ReleaseManifest, create_manifest, digest_records, digest_relations
 from .release_checks import ReleaseReadiness, ReleaseCheck, assess_release
 from .schema import SCHEMA_VERSION
 
@@ -70,6 +71,7 @@ class ReleaseRecord:
     commit_sha: str | None = None
     ci_passed: bool | None = None
     superseded_by: str | None = None
+    relationship_digest: str | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -80,6 +82,7 @@ class ReleaseRecord:
             "commit_sha": self.commit_sha,
             "ci_passed": self.ci_passed,
             "superseded_by": self.superseded_by,
+            "relationship_digest": self.relationship_digest,
         }
 
 
@@ -113,10 +116,11 @@ def release_record_from_dict(payload: dict[str, object]) -> ReleaseRecord:
         commit_sha=payload.get("commit_sha"),
         ci_passed=payload.get("ci_passed"),
         superseded_by=payload.get("superseded_by"),
+        relationship_digest=payload.get("relationship_digest"),
     )
 
 
-def _assert_unchanged(release: ReleaseRecord, records: list[Record]) -> None:
+def _assert_unchanged(release: ReleaseRecord, records: list[Record], relations: list[Relation]) -> None:
     """Refuse to transition a release if the underlying record set has drifted.
 
     A release's digest is supposed to identify exactly one record set
@@ -125,6 +129,10 @@ def _assert_unchanged(release: ReleaseRecord, records: list[Record]) -> None:
     silently misrepresent what was actually reviewed -- so this requires a
     fresh draft instead.
     """
+    if release.relationship_digest is None:
+        raise ValueError("legacy release lacks a relationship digest; stage a new draft")
+    if digest_relations(relations) != release.relationship_digest:
+        raise ValueError("relationship set has changed since this release was staged; stage a new draft")
     current_digest = digest_records(records)
     if current_digest != release.manifest.digest:
         raise ValueError(
@@ -145,6 +153,7 @@ def create_draft(
     A draft may still have unresolved provenance or incomplete benchmark
     grouping (checklist items 4 and 5 are advisory, not blocking, in draft).
     """
+    relations = list(relations)
     manifest = create_manifest(records, version, schema_version)
     readiness = assess_release(records, relations, closed_evidence_graph=False)
     return ReleaseRecord(
@@ -152,6 +161,7 @@ def create_draft(
         state="draft",
         readiness=readiness,
         history=(StateTransition("", "draft", _now(), "release staged"),),
+        relationship_digest=digest_relations(relations),
     )
 
 
@@ -167,13 +177,14 @@ def promote_to_candidate(
     """
     if release.state != "draft":
         raise ValueError(f"cannot promote to candidate from state '{release.state}'; expected 'draft'")
-    _assert_unchanged(release, records)
+    relations = list(relations)
+    _assert_unchanged(release, records, relations)
     readiness = assess_release(records, relations, closed_evidence_graph=False)
     if not readiness.passed:
         failing = [c.name for c in readiness.checks if not c.passed and c.severity == "error"]
         raise ValueError(f"structural checks failing, cannot reach candidate: {', '.join(failing)}")
     history = release.history + (StateTransition("draft", "candidate", _now(), "structural checks passed"),)
-    return ReleaseRecord(release.manifest, "candidate", readiness, history, release.commit_sha, release.ci_passed, release.superseded_by)
+    return ReleaseRecord(release.manifest, "candidate", readiness, history, release.commit_sha, release.ci_passed, release.superseded_by, release.relationship_digest)
 
 
 def verify(
@@ -193,17 +204,18 @@ def verify(
     """
     if release.state != "candidate":
         raise ValueError(f"cannot verify from state '{release.state}'; expected 'candidate'")
-    _assert_unchanged(release, records)
+    relations = list(relations)
+    _assert_unchanged(release, records, relations)
     if not commit_sha.strip():
         raise ValueError("verify requires a non-empty commit_sha")
-    if not ci_passed:
+    if ci_passed is not True:
         raise ValueError("verify requires ci_passed=True; CI must pass on the release commit before verification")
     readiness = assess_release(records, relations, closed_evidence_graph=True, require_benchmark_ready=require_benchmark_ready)
     if not readiness.passed:
         failing = [c.name for c in readiness.checks if not c.passed and c.severity == "error"]
         raise ValueError(f"release does not satisfy verified-release checks: {', '.join(failing)}")
     history = release.history + (StateTransition("candidate", "verified", _now(), f"commit={commit_sha}"),)
-    return ReleaseRecord(release.manifest, "verified", readiness, history, commit_sha, ci_passed, release.superseded_by)
+    return ReleaseRecord(release.manifest, "verified", readiness, history, commit_sha, ci_passed, release.superseded_by, release.relationship_digest)
 
 
 def deprecate(release: ReleaseRecord, *, superseded_by: str, note: str = "") -> ReleaseRecord:
@@ -213,4 +225,4 @@ def deprecate(release: ReleaseRecord, *, superseded_by: str, note: str = "") -> 
     if not superseded_by.strip():
         raise ValueError("deprecate requires the version that supersedes this release")
     history = release.history + (StateTransition(release.state, "deprecated", _now(), note or f"superseded by {superseded_by}"),)
-    return ReleaseRecord(release.manifest, "deprecated", release.readiness, history, release.commit_sha, release.ci_passed, superseded_by)
+    return ReleaseRecord(release.manifest, "deprecated", release.readiness, history, release.commit_sha, release.ci_passed, superseded_by, release.relationship_digest)

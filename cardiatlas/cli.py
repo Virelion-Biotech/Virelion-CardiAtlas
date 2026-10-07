@@ -19,6 +19,7 @@ from .harvest_store import write_harvest
 from .httpd import serve as serve_http
 from .harvester import harvest_plan
 from .identifiers import resolve as resolve_identifier
+from .jsonutil import strict_loads
 from .loader import read_bundle, record_from_dict
 from .models import DatasetRecord, EvidenceRecord
 from .ncbi import NcbiClient
@@ -55,13 +56,13 @@ def _read_metadata(path: str) -> list[dict[str, object]]:
             for line_number, line in enumerate(handle, 1):
                 if not line.strip():
                     continue
-                payload = json.loads(line)
+                payload = strict_loads(line)
                 if not isinstance(payload, dict):
                     raise ValueError(f"JSONL row {line_number} is not an object")
                 rows.append(payload)
         return rows
     if source.suffix.lower() == ".json":
-        payload = json.loads(source.read_text(encoding="utf-8"))
+        payload = strict_loads(source.read_text(encoding="utf-8"))
         if not isinstance(payload, list) or not all(isinstance(item, dict) for item in payload):
             raise ValueError("JSON metadata must contain an array of objects")
         return payload
@@ -77,7 +78,7 @@ def _read_relations_jsonl(path: str) -> list[Relation]:
         for line_number, line in enumerate(handle, 1):
             if not line.strip():
                 continue
-            payload = json.loads(line)
+            payload = strict_loads(line)
             try:
                 relations.append(Relation(
                     subject=payload["subject"],
@@ -255,7 +256,7 @@ def _dispatch(args: argparse.Namespace, service: AtlasService) -> int:
         return 0 if report["rejected_record_count"] == 0 else 1
 
     if args.command == "reconstruct-study":
-        payload = json.loads(Path(args.dataset).read_text(encoding="utf-8"))
+        payload = strict_loads(Path(args.dataset).read_text(encoding="utf-8"))
         dataset = record_from_dict(payload)
         if not isinstance(dataset, DatasetRecord):
             raise ValueError("dataset input must describe a DatasetRecord")
@@ -468,10 +469,15 @@ def main(argv: list[str] | None = None) -> int:
     else:
         service = AtlasService.empty()
     try:
-        return _dispatch(args, service)
-    finally:
+        status = _dispatch(args, service)
         if store is not None:
             store.save_service(service)
+        return status
+    except (OSError, KeyError, TypeError, ValueError) as exc:
+        print(json.dumps({"error": str(exc)}), file=sys.stderr)
+        return 2
+    finally:
+        if store is not None:
             store.close()
 
 

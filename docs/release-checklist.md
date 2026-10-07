@@ -10,7 +10,7 @@ A CardiAtlas release should be reproducible and auditable before it is consumed 
 4. Every provenance/source reference resolves to an indexed evidence record when a release claims a closed evidence graph. — `release_checks.assess_release` → `provenance_links`; hard error only when `closed_evidence_graph=True` (the default for `build-reference`/`release-check`, and always true once a release reaches `verified`), otherwise advisory.
 5. Sample metadata contain enough biological grouping information for the intended benchmark or analysis use. — `release_checks.assess_release` → `benchmark_readiness`, aggregating `study_readiness.assess_study_benchmark_readiness` across every study in the release; advisory unless `require_benchmark_ready=True` is requested (e.g. `cardiatlas release verify --require-benchmark-ready`).
 6. Controlled relationship predicates are used. — enforced at insertion time by `AtlasGraph.add()`, and re-checked independently at release time by `release_checks.assess_release` → `controlled_predicates`, since a release may assemble relations from a persisted store that bypassed that guard.
-7. The release digest is generated from the canonical record payload. — `release.digest_records` / `release.canonical_payload`; this never changes as a release moves through lifecycle states.
+7. The release digest is generated from the canonical record payload. A separate `relationship_digest` locks exact edge content, including confidence, source and evidence links, during promotion/verification. Legacy lifecycle records without this graph digest require a new draft. — `release.digest_records` / `release.canonical_payload`; this never changes as a release moves through lifecycle states.
 8. The exact release version, schema version, and source inventory are recorded. — `release.ReleaseManifest` (`version`, `schema_version`, `dataset_accessions`, `evidence_sources`).
 9. CI passes on the release commit. — supplied by the caller (normally CI itself) to `cardiatlas release verify --commit <sha> --ci-passed`; CardiAtlas has no way to observe this on its own.
 
@@ -21,7 +21,7 @@ A CardiAtlas release should be reproducible and auditable before it is consumed 
 - **verified** — CI and source/provenance checks pass on the exact release commit.
 - **deprecated** — superseded by a newer release but retained for reproducibility.
 
-Implemented in `cardiatlas/release_lifecycle.py` as an explicit, one-way state machine (`draft -> candidate -> verified -> deprecated`; see `RELEASE_STATES`). Every transition re-derives the release's manifest digest from whatever is currently in the store and refuses to proceed if it no longer matches the digest captured when the release was staged, so a `verified` release always reflects an exact, unchanged record set.
+Implemented in `cardiatlas/release_lifecycle.py` as an explicit, one-way state machine (`draft -> candidate -> verified -> deprecated`; see `RELEASE_STATES`). Every promotion/verification re-derives both record and relationship digests; deprecation preserves them. The transition code checks current store content against the digests captured when the release was staged, so a `verified` release always reflects an exact, unchanged record set.
 
 ### CLI
 
@@ -48,3 +48,7 @@ The same operations are available as plain functions in `cardiatlas.release_life
 ## What is deliberately not automated
 
 Automatic agreement with the literature is not treated as a release criterion. Biological interpretation, contradictory evidence, sample semantics, and benchmark eligibility may require explicit scientific review.
+
+## Scientific interpretation
+
+`verified` is a software/provenance lifecycle state based on caller-supplied CI information. It does not certify a biological claim or external source accuracy. A closed evidence graph checks indexed source/evidence references; external/unresolved graph nodes and edges without indexed citations are reported separately as warnings. Review those warnings before claiming complete graph provenance. Readiness establishes metadata eligibility, not statistical power, cohort comparability or leakage-free split feasibility.

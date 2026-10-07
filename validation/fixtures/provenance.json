@@ -1,0 +1,18 @@
+{
+  "retrieved_utc": "2026-10-07",
+  "geo_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE153nnn/GSE153480/soft/GSE153480_family.soft.gz",
+  "geo_full_decompressed_sha256": "421f810f732808b87485ad54c7e41c8b51a9faf9c03d4f96608d2eb8aacba128",
+  "geo_full_decompressed_bytes": 34642,
+  "geo_selected_fixture_sha256": "ba8b967f6429028de0c3e0d09103e9803f191ec5c3f2acd2ff18016742630cef",
+  "pubmed_endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=42754644,42611532,42546041,42396870,41867081,42799126&retmode=json",
+  "scope": "Selected bibliographic/sample metadata; full records not redistributed. Full-source digest differs from selected fixture digest.",
+  "geo_catalog_selected_sha256": "bff62db0062f71dea86f209c6efc78dd745437621ff5364301ec74830826f937",
+  "geo_catalog_lookup": "NCBI GDS esearch by each accession, retmax=20; esummary exact Series accession match required",
+  "geo_catalog_accessions": [
+    "GSE153480",
+    "GSE135310",
+    "GSE216211",
+    "GSE269054",
+    "GSE219117"
+  ]
+}

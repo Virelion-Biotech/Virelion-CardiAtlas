@@ -29,10 +29,10 @@ def pubmed_summary_to_evidence(summary: dict[str, Any]) -> EvidenceRecord:
         source_type="pubmed",
         source_identifier=pmid,
         citation=citation,
-        evidence_level="primary",
+        evidence_level="review" if any("review" in str(item).lower() for item in summary.get("pubtype", [])) else "curated",
         year=year,
         source_url=source_url,
-        metadata={"url": source_url} if source_url else {},
+        metadata={"url": source_url, "publication_types": summary.get("pubtype", []), "classification": "bibliographic_only; primary evidence requires content review"},
     )
 
 
@@ -40,7 +40,7 @@ def geo_summary_to_dataset(summary: dict[str, Any]) -> DatasetRecord:
     uid = str(summary.get("uid", ""))
     accession = normalize_accession(str(summary.get("accession", "") or summary.get("accessionversion", "")))
     title = str(summary.get("title", ""))
-    organism = normalize_species(str(summary.get("organism", "")))
+    organism = normalize_species(str(summary.get("organism", "") or summary.get("taxon", "")))
     tissue = str(summary.get("tissue", ""))
     n_samples = summary.get("n_samples")
     try:

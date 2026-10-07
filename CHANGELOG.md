@@ -2,6 +2,16 @@
 
 All notable changes to Virelion-CardiAtlas are documented here.
 
+## 0.9.0
+
+- Corrected GEO RNA-Seq ambiguity, explicit single-cell/nucleus title handling, surgery/timepoint aliases, missing-value fallback, conflicting subject handling and exact Series-summary selection. Parser version is now geo-soft-v2; historical reconstructions should be regenerated.
+- Benchmark metadata readiness now scopes samples to the study, requires complete conditions/modalities and real tissue metadata, and checks dataset membership. Unknown biological subjects remain blocked.
+- Enforced declared record types/enums and finite JSON, rejected unknown fields/duplicate JSON keys, validated persistent writes and exposed uncited or unresolved graph relationships.
+- Added a separate relationship digest to release lifecycle transitions. Legacy releases without this digest must be restaged; historical canonical record digests retain their meaning.
+- Corrected repeated-source evidence score inflation, multiword retrieval and bibliography-only classification. Scores remain heuristics, not calibrated probabilities or proof of independent studies.
+- Fixed optical record schema versions, included all eight optical records in reference builds, and made partial reference builds fail explicitly.
+- Added bounded NCBI transient-error retry/rate limiting, metadata source fixtures and live checks, property tests, wheel/CLI validation, CPU/Windows CI, coverage gating and package auditing.
+
 ## 0.8.1
 
 ### Added

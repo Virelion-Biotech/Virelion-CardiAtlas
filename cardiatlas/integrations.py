@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .models import DatasetRecord
+from .normalize import canonical_key, is_missing_metadata
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,9 +55,10 @@ def benchmark_readiness(dataset: DatasetRecord) -> dict[str, object]:
     checks = {
         "accession": bool(dataset.accession),
         "organism": bool(dataset.organism),
+        "species_scope": ";" not in dataset.organism and "mixed_species" not in dataset.quality_flags,
         "tissue": bool(dataset.tissue),
-        "modality": bool(dataset.modalities),
-        "conditions": len(dataset.conditions) >= 2,
+        "modality": bool(dataset.modalities) and all(item != "other" for item in dataset.modalities),
+        "conditions": len({canonical_key(item) for item in dataset.conditions if not is_missing_metadata(item)}) >= 2,
         "provenance": bool(dataset.evidence_ids or dataset.source_ids),
     }
     return {

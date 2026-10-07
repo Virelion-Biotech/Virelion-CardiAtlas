@@ -1,0 +1,194 @@
+{
+  "42754644": {
+    "uid": "42754644",
+    "title": "All-optical closed-loop control of human cardiomyocyte networks exploiting holographic optogenetics.",
+    "pubdate": "2026 Sep 17",
+    "pubtype": [
+      "Journal Article"
+    ],
+    "articleids": [
+      {
+        "idtype": "pubmed",
+        "idtypen": 1,
+        "value": "42754644"
+      },
+      {
+        "idtype": "pmc",
+        "idtypen": 8,
+        "value": "PMC13586264"
+      },
+      {
+        "idtype": "pmcid",
+        "idtypen": 5,
+        "value": "pmc-id: PMC13586264;"
+      },
+      {
+        "idtype": "doi",
+        "idtypen": 3,
+        "value": "10.1038/s44172-026-00779-1"
+      },
+      {
+        "idtype": "pii",
+        "idtypen": 4,
+        "value": "10.1038/s44172-026-00779-1"
+      }
+    ]
+  },
+  "42611532": {
+    "uid": "42611532",
+    "title": "Optogenetic tachypacing facilitates burst-induced arrhythmia in stem cell-derived human atrial engineered heart tissue.",
+    "pubdate": "2026 Aug 4",
+    "pubtype": [
+      "Journal Article"
+    ],
+    "articleids": [
+      {
+        "idtype": "pubmed",
+        "idtypen": 1,
+        "value": "42611532"
+      },
+      {
+        "idtype": "pmc",
+        "idtypen": 8,
+        "value": "PMC13484016"
+      },
+      {
+        "idtype": "pmcid",
+        "idtypen": 5,
+        "value": "pmc-id: PMC13484016;"
+      },
+      {
+        "idtype": "doi",
+        "idtypen": 3,
+        "value": "10.1093/europace/euag158"
+      },
+      {
+        "idtype": "pii",
+        "idtypen": 4,
+        "value": "8763797"
+      }
+    ]
+  },
+  "42546041": {
+    "uid": "42546041",
+    "title": "Real-time GPU-accelerated coupled cardiac system: Integrating bidirectional interactions between living optogenetic monolayers and computational simulations.",
+    "pubdate": "2026 Aug",
+    "pubtype": [
+      "Journal Article",
+      "Research Support, N.I.H., Extramural"
+    ],
+    "articleids": [
+      {
+        "idtype": "pubmed",
+        "idtypen": 1,
+        "value": "42546041"
+      },
+      {
+        "idtype": "pmc",
+        "idtypen": 8,
+        "value": "PMC13450847"
+      },
+      {
+        "idtype": "pmcid",
+        "idtypen": 5,
+        "value": "pmc-id: PMC13450847;"
+      },
+      {
+        "idtype": "doi",
+        "idtypen": 3,
+        "value": "10.1371/journal.pcbi.1014590"
+      },
+      {
+        "idtype": "pii",
+        "idtypen": 4,
+        "value": "PCOMPBIOL-D-26-00123"
+      }
+    ]
+  },
+  "42396870": {
+    "uid": "42396870",
+    "title": "Electrical coupling between transplanted cardiomyocytes and host myocardium to prevent arrhythmia.",
+    "pubdate": "2026 Jun 1",
+    "pubtype": [
+      "Journal Article",
+      "Review"
+    ],
+    "articleids": [
+      {
+        "idtype": "pubmed",
+        "idtypen": 1,
+        "value": "42396870"
+      },
+      {
+        "idtype": "pmc",
+        "idtypen": 8,
+        "value": "PMC13382989"
+      },
+      {
+        "idtype": "pmcid",
+        "idtypen": 5,
+        "value": "pmc-id: PMC13382989;"
+      },
+      {
+        "idtype": "doi",
+        "idtypen": 3,
+        "value": "10.1242/dmm.052768"
+      },
+      {
+        "idtype": "pii",
+        "idtypen": 4,
+        "value": "372131"
+      }
+    ]
+  },
+  "41867081": {
+    "uid": "41867081",
+    "title": "Recellularized Humanized Bioengineered Biatrial Model for Arrhythmia, Biological Pacemakers, and Optogenetic Studies.",
+    "pubdate": "2026 May 8",
+    "pubtype": [
+      "Journal Article"
+    ],
+    "articleids": [
+      {
+        "idtype": "pubmed",
+        "idtypen": 1,
+        "value": "41867081"
+      },
+      {
+        "idtype": "doi",
+        "idtypen": 3,
+        "value": "10.1161/CIRCRESAHA.125.326884"
+      }
+    ]
+  },
+  "42799126": {
+    "uid": "42799126",
+    "title": "Spatially Resolved Photostimulation of Cardiac Activity Using Optoelectronic Peptides.",
+    "pubdate": "2026 Sep 23",
+    "pubtype": [
+      "Journal Article"
+    ],
+    "articleids": [
+      {
+        "idtype": "pubmed",
+        "idtypen": 1,
+        "value": "42799126"
+      },
+      {
+        "idtype": "pmc",
+        "idtypen": 8,
+        "value": "PMC13614055"
+      },
+      {
+        "idtype": "pmcid",
+        "idtypen": 5,
+        "value": "pmc-id: PMC13614055;"
+      },
+      {
+        "idtype": "doi",
+        "idtypen": 3,
+        "value": "10.1021/acscentsci.6c00713"
+      }
+    ]
+  }
+}

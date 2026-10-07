@@ -40,7 +40,7 @@ class ReleaseManifest:
 def canonical_payload(records: Iterable[Record]) -> bytes:
     payload = [record.to_dict() for record in records]
     payload.sort(key=lambda item: (str(item.get("record_type", "")), str(item.get("id", ""))))
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
 
 
 def digest_records(records: Iterable[Record]) -> str:
@@ -72,3 +72,14 @@ def create_manifest(records: Iterable[Record], version: str, schema_version: str
 
 def verify_digest(records: Iterable[Record], expected: str) -> bool:
     return digest_records(records) == expected
+
+
+def digest_relations(relations) -> str:
+    """Hash exact edge content without changing the historical record digest."""
+    payload = []
+    for relation in relations:
+        item = relation.to_dict()
+        item['evidence_ids'] = sorted(set(item['evidence_ids']))
+        payload.append(item)
+    payload.sort(key=lambda item: json.dumps(item, sort_keys=True, allow_nan=False))
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode('utf-8')).hexdigest()

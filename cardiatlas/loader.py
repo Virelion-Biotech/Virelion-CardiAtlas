@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from .jsonutil import strict_loads
 from pathlib import Path
 from typing import Iterable
 
@@ -22,12 +23,17 @@ _RECORD_CLASSES = {
 
 
 def record_from_dict(payload: dict) -> Record:
+    if not isinstance(payload, dict):
+        raise ValueError("record payload must be a JSON object")
     payload = migrate_payload(payload) if payload.get("schema_version") == "0.2" else payload
     record_type = payload.get("record_type")
     cls = _RECORD_CLASSES.get(record_type)
     if cls is None:
         raise ValueError(f"unsupported record_type: {record_type}")
     field_names = {field.name for field in cls.__dataclass_fields__.values() if field.init}
+    unknown = set(payload) - field_names - {"record_type"}
+    if unknown:
+        raise ValueError(f"unknown record fields: {sorted(unknown)}")
     filtered = {key: value for key, value in payload.items() if key in field_names}
     return require_valid(cls(**filtered))
 
@@ -41,7 +47,7 @@ def read_bundle(paths: Iterable[str | Path]) -> list[Record]:
                 if not line.strip():
                     continue
                 try:
-                    payload = json.loads(line)
+                    payload = strict_loads(line)
                     records.append(record_from_dict(payload))
                 except (json.JSONDecodeError, TypeError, ValueError) as exc:
                     raise ValueError(f"invalid Atlas record in {source}:{line_number}: {exc}") from exc

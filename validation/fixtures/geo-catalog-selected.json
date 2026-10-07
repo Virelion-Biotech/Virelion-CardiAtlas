@@ -1,0 +1,52 @@
+[
+  {
+    "accession": "GSE153480",
+    "title": "Single cell RNA-seq of neonatal heart regeneration",
+    "taxon": "Mus musculus",
+    "n_samples": 8,
+    "gdstype": "Expression profiling by high throughput sequencing",
+    "pubmedids": [
+      "33296652"
+    ]
+  },
+  {
+    "accession": "GSE135310",
+    "title": "Time series single cell transcriptomics of cardiac inflammation after myocardial infarction in mice",
+    "taxon": "Mus musculus",
+    "n_samples": 7,
+    "gdstype": "Expression profiling by high throughput sequencing",
+    "pubmedids": [
+      "32811295"
+    ]
+  },
+  {
+    "accession": "GSE216211",
+    "title": "A subset of temporary resident cardiac macrophages induced by myocardial infarction limits adverse ventricular remodeling [scRNA-seq]",
+    "taxon": "Mus musculus",
+    "n_samples": 3,
+    "gdstype": "Expression profiling by high throughput sequencing",
+    "pubmedids": [
+      "37751357"
+    ]
+  },
+  {
+    "accession": "GSE269054",
+    "title": "Spatially clustered type I interferon responses at injury borderzones",
+    "taxon": "Homo sapiens; Mus musculus",
+    "n_samples": 37,
+    "gdstype": "Expression profiling by high throughput sequencing",
+    "pubmedids": [
+      "39198639"
+    ]
+  },
+  {
+    "accession": "GSE219117",
+    "title": "A subset of temporary resident cardiac macrophages induced by myocardial infarction limits adverse ventricular remodeling",
+    "taxon": "Mus musculus",
+    "n_samples": 7,
+    "gdstype": "Expression profiling by high throughput sequencing",
+    "pubmedids": [
+      "37751357"
+    ]
+  }
+]

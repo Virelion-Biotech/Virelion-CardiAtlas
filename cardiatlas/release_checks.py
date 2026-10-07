@@ -3,10 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable
 
-from .graph import Relation
+from .graph import Relation, AtlasGraph
 from .models import DatasetRecord, EvidenceRecord, Record, SampleRecord, StudyRecord
 from .release import digest_records
 from .schema import RELATION_TYPES
+from .ontology import CONCEPTS
 from .study_readiness import assess_study_benchmark_readiness
 from .validation import validate_record
 
@@ -97,7 +98,7 @@ def assess_release(
     orphan_sources = 0
     evidence_ids = {record.id for record in evidence}
     for record in records:
-        for source_id in record.source_ids:
+        for source_id in set(record.source_ids + getattr(record, "evidence_ids", [])):
             if source_id not in evidence_ids:
                 orphan_sources += 1
     # Item 4 is explicitly conditional: only a release that *claims* a closed
@@ -110,6 +111,20 @@ def assess_release(
     # assemble relations from a persisted store or an external bundle that
     # bypassed that guard, so this is checked again, independently, here.
     materialized_relations = list(relations)
+    known_nodes = set(ids) | {concept.id for concept in CONCEPTS}
+    unresolved_nodes = sorted({node for relation in materialized_relations for node in (relation.subject, relation.object) if node not in known_nodes})
+    checks.append(ReleaseCheck("relationship_endpoints", not unresolved_nodes, "warning", f"{len(unresolved_nodes)} external or unresolved graph nodes: {unresolved_nodes}"))
+    uncited = sum(not relation.evidence_ids for relation in materialized_relations)
+    checks.append(ReleaseCheck("relationship_citations", uncited == 0, "warning", f"{uncited} relationships have no indexed evidence citations; curated source labels are not claim validation"))
+    invalid_relations = 0
+    for relation in materialized_relations:
+        try:
+            AtlasGraph([relation])
+        except (TypeError, ValueError):
+            invalid_relations += 1
+    checks.append(ReleaseCheck("relationship_validation", invalid_relations == 0, "error", f"{invalid_relations} invalid relationships"))
+    orphan_relation_evidence = sum(eid not in evidence_ids for relation in materialized_relations for eid in relation.evidence_ids)
+    checks.append(ReleaseCheck("relationship_evidence", orphan_relation_evidence == 0, provenance_severity, f"{orphan_relation_evidence} unresolved relationship evidence references"))
     bad_predicates = sorted({r.predicate for r in materialized_relations if r.predicate not in RELATION_TYPES})
     checks.append(ReleaseCheck(
         "controlled_predicates",

@@ -25,7 +25,7 @@ class GeoReconstructionBundle:
     retrieved_at_utc: str
     payload_bytes: int
     benchmark_readiness: StudyBenchmarkReadiness
-    parser_version: str = "geo-soft-v1"
+    parser_version: str = "geo-soft-v2"
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -87,10 +87,16 @@ def write_geo_bundle(bundle: GeoReconstructionBundle, directory: str | Path) -> 
 
 def reconstruct_geo_accession(client: NcbiClient, accession: str, summary: dict[str, object] | None = None) -> GeoReconstructionBundle:
     accession = accession.strip().upper()
-    ids = client.esearch("gds", accession, retmax=1) if summary is None else []
+    client.geo_family_soft_url(accession)  # validate accession before retrieval
+    ids = client.esearch("gds", accession, retmax=20) if summary is None else []
     if summary is None:
         lookup = client.esummary("gds", ids)
-        summary = next((value for key, value in lookup.items() if key != "uids" and isinstance(value, dict)), {})
+        matches = [value for key, value in lookup.items() if key != "uids" and isinstance(value, dict) and str(value.get("accession", "")).strip().upper() == accession]
+        if len(matches) != 1:
+            raise ValueError(f"NCBI summary must resolve exactly one matching Series accession: {accession}")
+        summary = matches[0]
+    elif str(summary.get("accession", "")).strip().upper() != accession:
+        raise ValueError("provided GEO summary does not match the requested accession")
     dataset = geo_summary_to_dataset(summary)
     dataset.accession = accession
     dataset.id = f"dataset:geo:{accession}"

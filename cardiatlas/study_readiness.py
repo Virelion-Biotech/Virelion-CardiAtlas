@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .models import DatasetRecord, SampleRecord, StudyRecord
-from .studies import assess_study
+from .studies import assess_study, _has_explicit_subject
+from .normalize import is_missing_metadata
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,17 +30,21 @@ def assess_study_benchmark_readiness(
     dataset: DatasetRecord,
     samples: list[SampleRecord],
 ) -> StudyBenchmarkReadiness:
+    samples = [sample for sample in samples if sample.study_id == study.id]
     qc = assess_study(study, samples)
     conditions = {sample.condition for sample in samples if sample.condition}
     modalities = {sample.modality for sample in samples if sample.modality and sample.modality != "other"}
-    subjects = {sample.subject_id for sample in samples if sample.subject_id and not sample.metadata.get("subject_inferred", False)}
+    subjects = {sample.subject_id for sample in samples if _has_explicit_subject(sample)}
     checks = {
         "accession": bool(dataset.accession),
         "organism": bool(dataset.organism),
-        "tissue": bool(dataset.tissue or qc.sample_count),
+        "species_scope": ";" not in dataset.organism and "mixed_species" not in dataset.quality_flags,
+        "tissue": bool(dataset.tissue.strip()) or (bool(samples) and all(sample.tissue.strip() for sample in samples)),
         "sample_count": qc.sample_count > 0,
         "multiple_conditions": len(conditions) >= 2,
-        "recognized_modality": bool(modalities),
+        "recognized_modality": bool(modalities) and all(sample.modality != "other" for sample in samples),
+        "complete_conditions": bool(samples) and all(not is_missing_metadata(sample.condition) and " | " not in sample.condition for sample in samples),
+        "dataset_membership": dataset.id in study.dataset_ids and all(sample.dataset_id in study.dataset_ids for sample in samples),
         "subject_structure": bool(subjects) and qc.missing_subject_ids == 0,
         "no_duplicate_sample_accessions": qc.duplicate_accessions == 0,
         "provenance": bool(dataset.evidence_ids or dataset.source_ids),

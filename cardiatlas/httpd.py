@@ -8,6 +8,7 @@ the server's base Atlas.
 """
 from __future__ import annotations
 
+from .jsonutil import strict_loads
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
@@ -113,7 +114,7 @@ def _make_handler(api: AtlasAPI) -> type[BaseHTTPRequestHandler]:
         protocol_version = "HTTP/1.1"
 
         def _send_json(self, status: int, payload: dict[str, Any]) -> None:
-            body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+            body = json.dumps(payload, separators=(",", ":"), allow_nan=False).encode("utf-8")
             self.send_response(status)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
@@ -136,7 +137,7 @@ def _make_handler(api: AtlasAPI) -> type[BaseHTTPRequestHandler]:
                 return {}
             raw = self.rfile.read(length)
             try:
-                decoded = json.loads(raw)
+                decoded = strict_loads(raw)
             except (UnicodeDecodeError, json.JSONDecodeError) as exc:
                 raise ValueError(f"invalid JSON body: {exc}") from exc
             return _as_object(decoded)

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from .graph import Relation
+from .jsonutil import strict_loads
 from .loader import read_bundle
 from .models import Record
 from .release import ReleaseManifest, create_manifest
@@ -37,7 +37,7 @@ def _load_relations(path: Path) -> list[Relation]:
         for line_number, line in enumerate(handle, 1):
             if not line.strip():
                 continue
-            payload = json.loads(line)
+            payload = strict_loads(line)
             try:
                 relations.append(Relation(
                     subject=str(payload["subject"]),
@@ -60,9 +60,13 @@ def build_reference(root: str | Path, version: str = "0.4.0") -> ReferenceBuild:
         base / "data/examples/phenotypes.jsonl",
         base / "data/reference/cardiBench_evidence.jsonl",
         base / "data/reference/cardiac_datasets.jsonl",
+        base / "data/reference/optical_stimulation_evidence.jsonl",
+        base / "data/reference/optical_stimulation_interventions.jsonl",
     ]
-    existing = [path for path in paths if path.exists()]
-    records = read_bundle(existing)
+    missing = [str(path) for path in paths if not path.is_file()]
+    if missing:
+        raise ValueError(f"reference build requires all declared bundles; missing: {missing}")
+    records = read_bundle(paths)
     relations = _load_relations(base / "data/reference/core_relationships.jsonl")
     manifest = create_manifest(records, version)
     readiness = assess_release(records, relations)

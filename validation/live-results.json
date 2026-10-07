@@ -1,0 +1,90 @@
+{
+  "passed": true,
+  "package_version": "0.9.0",
+  "python": "3.12.14",
+  "source_mode": "live_ncbi",
+  "generated_utc": "2026-10-07T16:01:33.649311+00:00",
+  "scope": "Metadata/schema/bibliographic validation; not independent biological validation or claim-content review",
+  "reference_records_validated": 21,
+  "reference_relationships": 11,
+  "reference_warnings": [
+    "7 external or unresolved graph nodes: ['marker:actn2', 'marker:cmlc1', 'marker:col1a1', 'marker:emcn', 'marker:kcnj2', 'marker:pecam1', 'marker:scn5a']",
+    "11 relationships have no indexed evidence citations; curated source labels are not claim validation"
+  ],
+  "gse153480": {
+    "samples": 8,
+    "modality": "scrna",
+    "conditions": [
+      "myocardial_infarction",
+      "reference"
+    ],
+    "timepoints": [
+      "day1",
+      "day3"
+    ],
+    "explicit_subjects": 0,
+    "benchmark_ready": false,
+    "blockers": [
+      "subject_structure"
+    ],
+    "input_sha256": "421f810f732808b87485ad54c7e41c8b51a9faf9c03d4f96608d2eb8aacba128"
+  },
+  "optical_bibliographic_checks": [
+    {
+      "pmid": "42754644",
+      "title_doi_year_review_type_match": true
+    },
+    {
+      "pmid": "42611532",
+      "title_doi_year_review_type_match": true
+    },
+    {
+      "pmid": "42546041",
+      "title_doi_year_review_type_match": true
+    },
+    {
+      "pmid": "42396870",
+      "title_doi_year_review_type_match": true
+    },
+    {
+      "pmid": "41867081",
+      "title_doi_year_review_type_match": true
+    },
+    {
+      "pmid": "42799126",
+      "title_doi_year_review_type_match": true
+    }
+  ],
+  "catalog_checks": [
+    {
+      "accession": "GSE153480",
+      "title_taxon_sample_inventory_match": true,
+      "sample_records": 8,
+      "taxon": "Mus musculus"
+    },
+    {
+      "accession": "GSE135310",
+      "title_taxon_sample_inventory_match": true,
+      "sample_records": 7,
+      "taxon": "Mus musculus"
+    },
+    {
+      "accession": "GSE216211",
+      "title_taxon_sample_inventory_match": true,
+      "sample_records": 3,
+      "taxon": "Mus musculus"
+    },
+    {
+      "accession": "GSE269054",
+      "title_taxon_sample_inventory_match": true,
+      "sample_records": 37,
+      "taxon": "Homo sapiens; Mus musculus"
+    },
+    {
+      "accession": "GSE219117",
+      "title_taxon_sample_inventory_match": true,
+      "sample_records": 7,
+      "taxon": "Mus musculus"
+    }
+  ]
+}

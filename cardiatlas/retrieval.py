@@ -27,7 +27,7 @@ class RetrievalResult:
 
 
 def _terms(text: str) -> tuple[str, ...]:
-    return tuple(term for term in canonical_key(text).split() if term)
+    return tuple(term for term in canonical_key(text).split("_") if term)
 
 
 def retrieve(
@@ -65,7 +65,7 @@ def retrieve(
     return sorted(
         results,
         key=lambda item: (
-            -(item.lexical_score + ((item.evidence_score or 0.0) * 0.25)),
+            -(item.lexical_score + ((item.evidence_score or 0.0) / 100 * 0.25)),
             item.record.id,
         ),
     )[: max(limit, 0)]

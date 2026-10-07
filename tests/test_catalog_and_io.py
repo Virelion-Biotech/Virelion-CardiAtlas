@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 from cardiatlas.catalog import attach_datasets, group_datasets

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from cardiatlas.graph import Relation
 from cardiatlas.models import DatasetRecord, EvidenceRecord
 from cardiatlas.sqlite import SQLiteAtlasStore
 

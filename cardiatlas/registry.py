@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from .models import AtlasRecord, Record
+from .models import Record
 from .validation import require_valid
 
 

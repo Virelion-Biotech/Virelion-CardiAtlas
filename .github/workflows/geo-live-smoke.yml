@@ -16,6 +16,10 @@ jobs:
           python-version: "3.11"
       - name: Install package
         run: python -m pip install --upgrade pip && python -m pip install -e .
+      - name: Recheck live sample and bibliographic contracts
+        run: |
+          python -m pip install jsonschema
+          python validation/run_cpu_validation.py --live --output /tmp/cardiatlas-live-results.json
       - name: Reconstruct live GEO study
         run: |
           rm -rf /tmp/cardiatlas-geo
@@ -34,6 +38,12 @@ jobs:
           rows = [json.loads(line) for line in (root / 'samples.jsonl').read_text().splitlines() if line.strip()]
           report = json.loads((root / 'report.json').read_text())
           acquisition = json.loads((root / 'acquisition.json').read_text())
+          assert {row['modality'] for row in rows} == {'scrna'}
+          assert {row['condition'] for row in rows} == {'myocardial_infarction', 'reference'}
+          assert {row['timepoint'] for row in rows} == {'day1', 'day3'}
+          assert all(row['subject_id'] is None for row in rows)
+          assert report['benchmark_readiness']['ready'] is False
+          assert 'subject_structure' in report['benchmark_readiness']['missing']
           assert len(rows) == 8, f'expected 8 GEO samples, got {len(rows)}'
           assert report['dataset']['accession'] == 'GSE153480'
           assert acquisition['accession'] == 'GSE153480'
@@ -45,4 +55,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: geo-gse153480-reconstruction
-          path: /tmp/cardiatlas-geo/
+          path: |
+            /tmp/cardiatlas-geo/
+            /tmp/cardiatlas-live-results.json

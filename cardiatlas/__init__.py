@@ -62,4 +62,4 @@ __all__ = [
     "write_cardiBench_candidates", "write_records", "write_release",
 ]
 
-__version__ = "0.8.1"
+__version__ = "0.9.0"
