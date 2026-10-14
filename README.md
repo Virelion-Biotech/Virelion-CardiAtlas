@@ -2,6 +2,21 @@
 
 CardiAtlas is a Python library for representing and retrieving cardiac biomedical metadata, evidence, phenotypes, datasets, studies, samples, and provenance.
 
+
+<!-- VALIDATION_PRODUCT_STATUS:BEGIN -->
+## Validation and product completion status
+
+**Reviewed 2026-10-14; implementation base `37f452b92c50`.** **Status: Metadata/schema/source checks; biomedical-claim curation incomplete.** This is an evidence-backed scope assessment, not a percentage-complete estimate or a declaration that the product is finished.
+
+| Area | Current evidence / remaining gate |
+|---|---|
+| Software / operational checks | Automated test sources and CI definitions are present; this documentation audit does not report a new algorithm/data-validation run. |
+| Scientific or domain evidence | The 0.9 audit records 142 tests, 82.10% coverage and 21 schema-checked references; live checks cover eight GSE153480 samples and six optical citations. GSE153480 subject IDs remain unresolved. Citation identity is not claim correctness. |
+| Remaining for the declared product scope | Resolve required biological IDs and metadata ambiguities; curate graph relationships/claims with source-location evidence and contradiction review; benchmark retrieval/normalization accuracy against a reviewed corpus; qualify source refresh, persistence and consumer handoffs at intended scale. |
+
+Evidence and limits: [repository report](validation/README.md). The [organization status index](https://github.com/Virelion-Biotech/Virelion-HeartTwin/blob/main/docs/STACK_VALIDATION_STATUS.md) separates software, numerical, data-readiness and empirical qualification. Code/schema execution or a completed download is not a substitute for endpoint-specific validation.
+<!-- VALIDATION_PRODUCT_STATUS:END -->
+
 ## CPU audit (0.9.0)
 
 142 local tests pass with 82.10% coverage. All 21 reference records pass runtime and JSON Schema validation. Reproducible source checks validate eight live GSE153480 samples and the bibliographic identity of six optical references. **GSE153480 still lacks explicit subject IDs and remains blocked for benchmark readiness.** Core graph citations and biological claim correctness remain incomplete. See the [audit and limits](validation/README.md).
