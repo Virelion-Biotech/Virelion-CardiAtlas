@@ -8,7 +8,7 @@ A CardiAtlas release should be reproducible and auditable before it is consumed 
 2. IDs are unique and stable. — `release_checks.assess_release` → `unique_ids`.
 3. Dataset accessions are not duplicated unintentionally. — `release_checks.assess_release` → `dataset_accessions`.
 4. Every provenance/source reference resolves to an indexed evidence record when a release claims a closed evidence graph. — `release_checks.assess_release` → `provenance_links`; hard error only when `closed_evidence_graph=True` (the default for `build-reference`/`release-check`, and always true once a release reaches `verified`), otherwise advisory.
-5. Sample metadata contain enough biological grouping information for the intended benchmark or analysis use. — `release_checks.assess_release` → `benchmark_readiness`, aggregating `study_readiness.assess_study_benchmark_readiness` across every study in the release; advisory unless `require_benchmark_ready=True` is requested (e.g. `cardiatlas release verify --require-benchmark-ready`).
+5. Sample metadata contain enough biological grouping information for the intended benchmark or analysis use. — `release_checks.assess_release` → `benchmark_readiness`, aggregating `study_readiness.assess_study_benchmark_readiness` across every study. It is a blocking error for verified releases by default; the explicit `--allow-unready-studies` option is reserved for research-only releases that do not claim benchmark readiness.
 6. Controlled relationship predicates are used. — enforced at insertion time by `AtlasGraph.add()`, and re-checked independently at release time by `release_checks.assess_release` → `controlled_predicates`, since a release may assemble relations from a persisted store that bypassed that guard.
 7. The release digest is generated from the canonical record payload. A separate `relationship_digest` locks exact edge content, including confidence, source and evidence links, during promotion/verification. Legacy lifecycle records without this graph digest require a new draft. — `release.digest_records` / `release.canonical_payload`; this never changes as a release moves through lifecycle states.
 8. The exact release version, schema version, and source inventory are recorded. — `release.ReleaseManifest` (`version`, `schema_version`, `dataset_accessions`, `evidence_sources`).
@@ -18,10 +18,10 @@ A CardiAtlas release should be reproducible and auditable before it is consumed 
 
 - **draft** — internally generated; may contain unresolved provenance or incomplete metadata.
 - **candidate** — passes structural checks and is suitable for review.
-- **verified** — CI and source/provenance checks pass on the exact release commit.
+- **verified** — CI and source/provenance checks pass on the exact release commit, every included study passes benchmark-readiness, and claim citations have reviewed source locators.
 - **deprecated** — superseded by a newer release but retained for reproducibility.
 
-Implemented in `cardiatlas/release_lifecycle.py` as an explicit, one-way state machine (`draft -> candidate -> verified -> deprecated`; see `RELEASE_STATES`). Every promotion/verification re-derives both record and relationship digests; deprecation preserves them. The transition code checks current store content against the digests captured when the release was staged, so a `verified` release always reflects an exact, unchanged record set.
+Implemented in `cardiatlas/release_lifecycle.py` as an explicit, one-way state machine (`draft -> candidate -> verified -> deprecated`; see `RELEASE_STATES`). Every promotion/verification re-derives record, relationship, and claim-set digests; deprecation preserves them. The transition code checks current store content against the digests captured when the release was staged, so a `verified` release always reflects an exact, unchanged record set.
 
 ### CLI
 

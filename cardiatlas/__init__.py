@@ -4,7 +4,7 @@ from .acquisition import AcquisitionTarget, acquisition_plan, plan_as_dict
 from .api import AtlasAPI
 from .build import ReferenceBuild, build_reference, populate_registry
 from .catalog import CatalogGroup, attach_datasets, group_datasets
-from .claims import Claim, ClaimAssessment, ClaimStore
+from .claims import Claim, ClaimAssessment, ClaimEvidence, ClaimStore
 from .contracts import AtlasContext, context_from_dict
 from .corpus import CorpusReport, corpus_report
 from .diff import SnapshotDiff, diff_records
@@ -47,7 +47,7 @@ from .study_readiness import StudyBenchmarkReadiness, assess_study_benchmark_rea
 
 __all__ = [
     "AcquisitionTarget", "AtlasAPI", "AtlasContext", "AtlasGraph", "AtlasRecord", "AtlasRegistry", "AtlasService",
-    "BenchmarkCandidate", "CatalogGroup", "CellStateRecord", "Claim", "ClaimAssessment", "ClaimStore", "Concept",
+    "BenchmarkCandidate", "CatalogGroup", "CellStateRecord", "Claim", "ClaimAssessment", "ClaimEvidence", "ClaimStore", "Concept",
     "CorpusReport", "DatasetRecord", "DEFAULT_PORT", "EvidenceRecord", "EvidenceScore", "GeoReconstructionBundle", "GeoSoftSample", "HarvestBatch", "HarvestItem", "HarvestManifest", "HarvestQC", "HarmonizedValue", "IdentifierResolution",
     "InterventionRecord", "MarkerRecord", "PhenotypeRecord", "PromotionDecision", "ProvenanceBundle", "ProvenanceEvent", "Query", "QueryHit",
     "QualityReport", "ReconstructionDecision", "ReconstructionReport", "ReferenceBuild", "Relation", "RELEASE_STATES", "ReleaseCheck", "ReleaseManifest", "ReleaseReadiness", "ReleaseRecord", "RetrievalResult",

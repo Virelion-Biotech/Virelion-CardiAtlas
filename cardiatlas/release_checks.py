@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from .graph import Relation, AtlasGraph
+from .claims import Claim
 from .models import DatasetRecord, EvidenceRecord, Record, SampleRecord, StudyRecord
 from .release import digest_records
 from .schema import RELATION_TYPES
@@ -69,6 +70,8 @@ def assess_release(
     *,
     closed_evidence_graph: bool = True,
     require_benchmark_ready: bool = False,
+    claims: Iterable[Claim] = (),
+    require_claim_review: bool = False,
 ) -> ReleaseReadiness:
     """Run release-checklist checks (docs/release-checklist.md) over a record set.
 
@@ -80,6 +83,7 @@ def assess_release(
     (item 5) or whether that's surfaced as advisory information.
     """
     checks: list[ReleaseCheck] = []
+    claim_values = list(claims)
     validation_errors = [(r.id, validate_record(r)) for r in records]
     invalid = [(rid, errs) for rid, errs in validation_errors if errs]
     checks.append(ReleaseCheck("record_validation", not invalid, "error", f"{len(invalid)} invalid records"))
@@ -90,6 +94,25 @@ def assess_release(
 
     evidence = [record for record in records if isinstance(record, EvidenceRecord)]
     checks.append(ReleaseCheck("evidence_inventory", len(evidence) > 0 or not records, "warning", f"{len(evidence)} evidence records indexed"))
+
+    evidence_ids_for_claims = {item.id for item in evidence}
+    missing_claim_sources: list[str] = []
+    unreviewed_claim_sources: list[str] = []
+    for claim in claim_values:
+        citation_ids = {item.evidence_id for item in claim.citations}
+        if not claim.citations or not set(claim.evidence_ids).issubset(citation_ids):
+            missing_claim_sources.append(claim.id)
+        for citation in claim.citations:
+            if citation.evidence_id not in evidence_ids_for_claims:
+                missing_claim_sources.append(claim.id)
+            if citation.review_status not in {"source_verified", "expert_reviewed"} or not citation.source_locator:
+                unreviewed_claim_sources.append(claim.id)
+    missing_claim_sources = sorted(set(missing_claim_sources))
+    unreviewed_claim_sources = sorted(set(unreviewed_claim_sources))
+    claim_severity = "error" if require_claim_review else "warning"
+    claims_pass = not missing_claim_sources and (not require_claim_review or not unreviewed_claim_sources)
+    claim_message = f"{len(claim_values)} claims checked; {len(missing_claim_sources)} missing source links; {len(unreviewed_claim_sources)} unreviewed citations"
+    checks.append(ReleaseCheck("claim_provenance", claims_pass, claim_severity, claim_message))
 
     datasets = [record for record in records if isinstance(record, DatasetRecord)]
     accession_dups = len([d.accession for d in datasets if d.accession]) - len({d.accession for d in datasets if d.accession})

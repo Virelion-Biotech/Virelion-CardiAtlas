@@ -46,6 +46,11 @@ def assess_study_benchmark_readiness(
         "complete_conditions": bool(samples) and all(not is_missing_metadata(sample.condition) and " | " not in sample.condition for sample in samples),
         "dataset_membership": dataset.id in study.dataset_ids and all(sample.dataset_id in study.dataset_ids for sample in samples),
         "subject_structure": bool(subjects) and qc.missing_subject_ids == 0,
+        "subject_mapping_provenance": bool(samples) and all(
+            sample.metadata.get("subject_mapping", {}).get("status") in {"source_verified", "expert_reviewed"}
+            and bool(sample.metadata.get("subject_mapping", {}).get("basis"))
+            for sample in samples
+        ),
         "no_duplicate_sample_accessions": qc.duplicate_accessions == 0,
         "provenance": bool(dataset.evidence_ids or dataset.source_ids),
     }

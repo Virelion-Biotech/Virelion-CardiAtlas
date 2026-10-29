@@ -1,79 +1,30 @@
 # Virelion-HeartTwin integration
 
-CardiAtlas supports the two capabilities HeartTwin currently registers for it:
-`atlas.search` and `atlas.context`. HeartTwin can invoke them either through its
-native adapter when the `cardiatlas` package is installed, or through the HTTP
-fallback configured by `CARDIATLAS_URL`.
+CardiAtlas supports native Python use and a stdlib-only HTTP fallback. The native adapter and HTTP server must keep their response contracts compatible as they evolve.
 
-The important contract is **wire parity**: both modes return the same
-HeartTwin-facing JSON shape. The raw `AtlasContext` inside the wrapper retains
-CardiAtlas's own contract version (`1.1`), while the outer HeartTwin adapter
-payload is version `1.0`.
+## Read capabilities
 
-## HTTP deployment
+The native service capabilities are `atlas.search`, `atlas.context`, `atlas.retrieve`, `atlas.explain`, `atlas.claim`, `atlas.claims`, `atlas.dataset.readiness`, and `atlas.graph`.
 
-```bash
-cardiatlas serve atlas.sqlite --host 0.0.0.0 --port 8420
-# export CARDIATLAS_URL=http://<host>:8420 for HeartTwin
-```
+| Capability | Input | Purpose |
+|---|---|---|
+| `atlas.search` | `query` or compatibility `text`, optional record type/tags/limit | Exact multi-field lexical query |
+| `atlas.retrieve` | `query`, optional record type and bounded limit | Partial-term retrieval with separate lexical and heuristic evidence inventory scores |
+| `atlas.context` | `record_ids`, optional `context_id` | Structured context for HeartTwin |
+| `atlas.explain` | `record_id` | Record, indexed evidence, neighbors and graph edges |
+| `atlas.claim` | `claim_id` | Current claim revision, evidence status and source-located citations |
+| `atlas.claims` | empty object | Enumerate persisted current claim revisions |
+| `atlas.dataset.readiness` | `study_id`, `dataset_id` | Explicit metadata and benchmark-readiness checks |
+| `atlas.graph` | `record_id`, optional integer `hops` | Record, graph context and evidence explanation |
 
-Routes:
+The HTTP server supports equivalent POST endpoints `/v1/atlas/search`, `/v1/atlas/context`, `/v1/atlas/retrieve`, `/v1/atlas/explain`, `/v1/atlas/claim`, `/v1/atlas/claims`, `/v1/atlas/dataset/readiness`, and `/v1/atlas/graph`; `GET /health` reports service status.
 
-| Route | Method | Request | HeartTwin-facing response |
-|---|---|---|---|
-| `/health` | GET | none | `AtlasAPI.health()` |
-| `/v1/atlas/search` | POST | `{query?, text?, record_type?, tags?, limit?, records?}` | `{contract_version, query, records, count}` |
-| `/v1/atlas/context` | POST | `{record_ids?, context_id?, entity_id?, records?}` | `{contract_version, context_id, record_ids, context, provenance}` |
+## Persistence
 
-`query` is the HeartTwin-native name; `text` is accepted as a compatibility
-alias. If both are supplied they must agree.
+`CARDIATLAS_DB` points HeartTwin's native adapter to an existing SQLite database. Claim revisions are persisted separately from biomedical records; the current version is returned by APIs while earlier revisions remain available through SQLite's history API. This HTTP interface is read-only. Use authenticated curator tooling or local CLI operations to load new source-reviewed claim JSONL; never expose a write-enabled curation interface anonymously.
 
-`records` is optional. When present, those records are overlaid on the loaded
-SQLite Atlas **for that request only**. They do not mutate the server's
-in-memory base Atlas or the SQLite database. This makes the HTTP fallback
-semantically compatible with HeartTwin workflows that pass transient Atlas
-records while still allowing a deployed server to answer from a persistent
-knowledge base.
+## Source and scientific limitations
 
-Invalid JSON, invalid field types, or oversized bodies fail with HTTP 400.
-Unknown routes return 404. An omitted `record_ids` list yields an explicit
-empty context, which matches HeartTwin's generic invocation path without
-inventing biological context. An omitted search query yields zero hits rather
-than dumping arbitrary records from the persistent Atlas.
+A source-verified citation means the source location was checked, not that the biological interpretation was independently established. An expert-reviewed citation requires a reviewer identity. Claims without source locators or linked evidence cannot pass the strict claim-review release gate. A complete metadata checklist likewise does not prove statistical power, causal truth, or clinical validity.
 
-### Example
-
-```bash
-curl -sS -H 'Content-Type: application/json' \
-  -X POST http://127.0.0.1:8420/v1/atlas/search \
-  -d '{"query":"cardiac fibrosis","limit":10}'
-
-curl -sS -H 'Content-Type: application/json' \
-  -X POST http://127.0.0.1:8420/v1/atlas/context \
-  -d '{"entity_id":"sample-001","record_ids":["marker:postn"]}'
-```
-
-## Native use inside HeartTwin
-
-CardiAtlas itself exposes the framework-agnostic `AtlasAPI`:
-
-```python
-from cardiatlas import AtlasAPI
-from cardiatlas.sqlite import SQLiteAtlasStore
-
-with SQLiteAtlasStore("atlas.sqlite") as store:
-    api = AtlasAPI(store.load_service())
-    api.search(text="cardiac fibrosis", limit=10)
-    api.context(record_ids=["marker:postn"], context_id="sample-001-context")
-```
-
-HeartTwin's native adapter is responsible for wrapping those calls into the
-same outer JSON contract used by the HTTP routes. HeartTwin may also load a
-persistent store through its own `CARDIATLAS_DB` configuration when supported
-by the installed HeartTwin revision.
-
-## Store lifecycle
-
-`cardiatlas serve` loads the SQLite store into memory once at startup. Restart
-the process after changing the persistent store. The HTTP API is intentionally
-read-only; request-local overlays are discarded after each request.
+`cardiatlas serve` loads SQLite into memory at startup. Restart after database changes. For public deployment, put the service behind HTTPS, authentication, rate limiting and resource limits; the stdlib server is not a standalone public-production boundary.

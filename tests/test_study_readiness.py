@@ -25,8 +25,8 @@ def test_study_benchmark_readiness_requires_real_structure():
         dataset_ids=[dataset.id],
     )
     samples = [
-        SampleRecord(id="sample:1", name="GSM1", accession="GSM1", dataset_id=dataset.id, study_id=study.id, subject_id="pig1", condition="myocardial_infarction", timepoint="P35", modality="snrna"),
-        SampleRecord(id="sample:2", name="GSM2", accession="GSM2", dataset_id=dataset.id, study_id=study.id, subject_id="pig2", condition="reference", timepoint="P35", modality="snrna"),
+        SampleRecord(id="sample:1", name="GSM1", accession="GSM1", dataset_id=dataset.id, study_id=study.id, subject_id="pig1", condition="myocardial_infarction", timepoint="P35", modality="snrna", metadata={"subject_mapping": {"status": "source_verified", "basis": "explicit source subject identifier"}}),
+        SampleRecord(id="sample:2", name="GSM2", accession="GSM2", dataset_id=dataset.id, study_id=study.id, subject_id="pig2", condition="reference", timepoint="P35", modality="snrna", metadata={"subject_mapping": {"status": "source_verified", "basis": "explicit source subject identifier"}}),
     ]
     ready = assess_study_benchmark_readiness(study, dataset, samples)
     assert ready.ready

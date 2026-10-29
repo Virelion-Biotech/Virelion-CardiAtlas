@@ -6,7 +6,6 @@ from typing import Iterable
 
 from .models import EvidenceRecord, Record
 
-
 _LEVEL_WEIGHT = {
     "primary": 1.0,
     "review": 0.75,
@@ -24,22 +23,35 @@ class EvidenceScore:
     independent_sources: int
 
 
+def _source_key(item: EvidenceRecord) -> tuple[str, str]:
+    source_type = item.source_type.strip().lower()
+    identifier = " ".join(item.source_identifier.split()).casefold()
+    return (source_type, identifier) if identifier else ("record", item.id)
+
+
 def score_evidence(records: Iterable[EvidenceRecord]) -> EvidenceScore:
-    unique = {}
+    """Compute a heuristic source inventory score, not a probability of truth.
+
+    Duplicate source identifiers are collapsed case-insensitively and the
+    strongest evidence classification wins, independent of input ordering.
+    """
+    unique: dict[tuple[str, str], EvidenceRecord] = {}
     for item in records:
-        # Source-record counts are heuristic, not independent experiments.
-        key = (item.source_type, item.source_identifier.strip().lower()) if item.source_identifier.strip() else ("record", item.id)
+        key = _source_key(item)
         existing = unique.get(key)
-        if existing is None or _LEVEL_WEIGHT.get(item.evidence_level, 0.5) < _LEVEL_WEIGHT.get(existing.evidence_level, 0.5):
+        rank = (_LEVEL_WEIGHT.get(item.evidence_level, 0.5), item.id)
+        existing_rank = (
+            _LEVEL_WEIGHT.get(existing.evidence_level, 0.5), existing.id
+        ) if existing is not None else None
+        if existing is None or rank > existing_rank:
             unique[key] = item
-    values = list(unique.values())
+
+    values = [unique[key] for key in sorted(unique)]
     if not values:
         return EvidenceScore(0.0, 0, 0, 0)
     weighted = sum(_LEVEL_WEIGHT.get(item.evidence_level, 0.5) for item in values)
-    diversity = len({(item.source_type, item.source_identifier) for item in values})
+    diversity = len(unique)
     primary = sum(item.evidence_level == "primary" for item in values)
-    # Saturating transform: repeated evidence helps, but cannot overwhelm
-    # quality/source diversity.
     count_factor = min(1.0, log1p(len(values)) / log1p(10))
     diversity_factor = min(1.0, diversity / 4)
     quality_factor = min(1.0, weighted / max(1.0, len(values)))
@@ -54,10 +66,6 @@ def evidence_for(record: Record, evidence_index: dict[str, EvidenceRecord]) -> l
 
 def provenance_chain(record: Record, evidence_index: dict[str, EvidenceRecord]) -> list[dict]:
     return [
-        {
-            "record_id": record.id,
-            "record_type": record.record_type,
-            "evidence": evidence.to_dict(),
-        }
-        for evidence in evidence_for(record, evidence_index)
+        {"record_id": record.id, "record_type": record.record_type, "evidence": item.to_dict()}
+        for item in evidence_for(record, evidence_index)
     ]

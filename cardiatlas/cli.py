@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from .acquisition import acquisition_plan
+from .claims import Claim
 from .adapters import geo_summary_to_dataset, pubmed_summary_to_evidence
 from .build import build_reference
 from .corpus import corpus_report
@@ -40,7 +41,7 @@ _DB_BACKED_COMMANDS = {
     "corpus", "explain", "release-check",
     "pubmed", "geo", "harvest", "promote-harvest",
     "reconstruct-study", "reconstruct-geo",
-    "load", "search", "context", "export",
+    "load", "claims-load", "search", "context", "export",
 }
 
 
@@ -160,7 +161,8 @@ def build_parser() -> argparse.ArgumentParser:
     verify_cmd.add_argument("version")
     verify_cmd.add_argument("--commit", required=True, dest="commit_sha", help="the exact commit the release was built from")
     verify_cmd.add_argument("--ci-passed", action="store_true", help="confirm CI passed on that commit (required to verify)")
-    verify_cmd.add_argument("--require-benchmark-ready", action="store_true", help="also require every study in the release to pass its benchmark-readiness gate")
+    verify_cmd.add_argument("--require-benchmark-ready", action="store_true", help="explicitly require every study to pass benchmark-readiness (the default)")
+    verify_cmd.add_argument("--allow-unready-studies", action="store_true", help="explicit research-only opt-out; do not use for releases claimed benchmark-ready")
     deprecate_cmd = lifecycle_sub.add_parser("deprecate", help="mark a release deprecated, retained for reproducibility")
     deprecate_cmd.add_argument("db")
     deprecate_cmd.add_argument("version")
@@ -185,6 +187,10 @@ def build_parser() -> argparse.ArgumentParser:
     load_cmd.add_argument("db")
     load_cmd.add_argument("paths", nargs="+", help="one or more JSONL files of Atlas records")
     load_cmd.add_argument("--relations", default=None, help="a JSONL file of relations: {subject, predicate, object, evidence_ids?, confidence?, source?}")
+
+    claims_load_cmd = sub.add_parser("claims-load", help="ingest versioned claim JSONL into a persistent SQLite store")
+    claims_load_cmd.add_argument("db")
+    claims_load_cmd.add_argument("paths", nargs="+", help="JSONL claim bundles emitted by Claim.to_dict()")
 
     search_cmd = sub.add_parser("search", help="lexical, evidence-aware search over a persistent store")
     search_cmd.add_argument("db")
@@ -238,7 +244,10 @@ def _dispatch(args: argparse.Namespace, service: AtlasService) -> int:
         return 0
 
     if args.command == "release-check":
-        result = assess_release(service.registry.all(), service.graph.relations())
+        result = assess_release(
+            service.registry.all(), service.graph.relations(), claims=service.claims.all(),
+            require_claim_review=True, require_benchmark_ready=True,
+        )
         print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
         return 0 if result.passed else 1
 
@@ -323,6 +332,24 @@ def _dispatch(args: argparse.Namespace, service: AtlasService) -> int:
             return 1
         return 0
 
+    if args.command == "claims-load":
+        loaded = 0
+        for path in args.paths:
+            with Path(path).open("r", encoding="utf-8") as handle:
+                for line_number, line in enumerate(handle, 1):
+                    if not line.strip():
+                        continue
+                    try:
+                        payload = strict_loads(line)
+                        if not isinstance(payload, dict):
+                            raise ValueError("claim row must be an object")
+                        service.claims.upsert(Claim.from_dict(payload))
+                        loaded += 1
+                    except (TypeError, ValueError) as exc:
+                        raise ValueError(f"invalid claim in {path}:{line_number}: {exc}") from exc
+        print(json.dumps({"db": args.db, "claims_loaded": loaded}, indent=2, sort_keys=True))
+        return 0
+
     if args.command == "load":
         records = read_bundle(args.paths)
         service.add_many(records)
@@ -404,7 +431,7 @@ def main(argv: list[str] | None = None) -> int:
                 records = store.all_records()
                 relations = store.graph().relations()
                 kwargs = {"schema_version": args.schema_version} if args.schema_version else {}
-                release = create_draft(records, args.version, relations, **kwargs)
+                release = create_draft(records, args.version, relations, claims=store.all_claims(), **kwargs)
                 store.save_release_record(release)
                 print(json.dumps(release.to_dict(), indent=2, sort_keys=True))
                 return 0 if release.readiness.passed else 1
@@ -422,7 +449,7 @@ def main(argv: list[str] | None = None) -> int:
                 records = store.all_records()
                 relations = store.graph().relations()
                 try:
-                    release = promote_to_candidate(existing, records, relations)
+                    release = promote_to_candidate(existing, records, relations, claims=store.all_claims())
                 except ValueError as exc:
                     print(str(exc), file=sys.stderr)
                     return 1
@@ -437,7 +464,8 @@ def main(argv: list[str] | None = None) -> int:
                     release = verify(
                         existing, records, relations,
                         commit_sha=args.commit_sha, ci_passed=args.ci_passed,
-                        require_benchmark_ready=args.require_benchmark_ready,
+                        require_benchmark_ready=(args.require_benchmark_ready or not args.allow_unready_studies),
+                        claims=store.all_claims(),
                     )
                 except ValueError as exc:
                     print(str(exc), file=sys.stderr)

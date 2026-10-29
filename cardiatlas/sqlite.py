@@ -46,6 +46,13 @@ class SQLiteAtlasStore:
             );
             CREATE INDEX IF NOT EXISTS idx_relations_subject ON relations(subject);
             CREATE INDEX IF NOT EXISTS idx_relations_object ON relations(object_id);
+            CREATE TABLE IF NOT EXISTS claims (
+                claim_id TEXT NOT NULL,
+                version INTEGER NOT NULL,
+                payload TEXT NOT NULL,
+                PRIMARY KEY(claim_id, version)
+            );
+            CREATE INDEX IF NOT EXISTS idx_claims_id_version ON claims(claim_id, version DESC);
             CREATE TABLE IF NOT EXISTS releases (
                 version TEXT PRIMARY KEY,
                 manifest TEXT NOT NULL
@@ -204,6 +211,54 @@ class SQLiteAtlasStore:
             rows = self._connection.execute("SELECT payload FROM release_lifecycle WHERE state=? ORDER BY version", (state,)).fetchall()
         return [json.loads(row["payload"]) for row in rows]
 
+    def upsert_claim(self, claim) -> None:
+        """Persist an immutable claim revision; repeated identical writes are idempotent."""
+        from .claims import Claim
+        if not isinstance(claim, Claim):
+            raise TypeError("claim must be a Claim instance")
+        payload = json.dumps(claim.to_dict(), sort_keys=True, ensure_ascii=False, allow_nan=False)
+        existing = self._connection.execute(
+            "SELECT payload FROM claims WHERE claim_id=? AND version=?",
+            (claim.id, claim.version),
+        ).fetchone()
+        if existing is not None:
+            if existing["payload"] != payload:
+                raise ValueError(f"claim revision already exists with different content: {claim.id} v{claim.version}")
+            return
+        latest = self._connection.execute(
+            "SELECT MAX(version) AS version FROM claims WHERE claim_id=?", (claim.id,)
+        ).fetchone()["version"]
+        if latest is not None and claim.version <= latest:
+            raise ValueError(f"claim revision must exceed persisted version {latest}: {claim.id}")
+        self._connection.execute(
+            "INSERT INTO claims(claim_id, version, payload) VALUES(?,?,?)",
+            (claim.id, claim.version, payload),
+        )
+        self._connection.commit()
+
+    def all_claims(self) -> list:
+        """Return the newest persisted revision of each claim."""
+        from .claims import Claim
+        rows = self._connection.execute(
+            "SELECT c.payload FROM claims c JOIN (SELECT claim_id, MAX(version) AS version "
+            "FROM claims GROUP BY claim_id) latest ON latest.claim_id=c.claim_id AND latest.version=c.version "
+            "ORDER BY c.claim_id"
+        ).fetchall()
+        return [Claim.from_dict(json.loads(row["payload"])) for row in rows]
+
+    def claim_history(self, claim_id: str) -> list:
+        from .claims import Claim
+        rows = self._connection.execute(
+            "SELECT payload FROM claims WHERE claim_id=? ORDER BY version", (claim_id,)
+        ).fetchall()
+        return [Claim.from_dict(json.loads(row["payload"])) for row in rows]
+
+    def delete_claim(self, claim_id: str) -> int:
+        """Delete a claim's revision history explicitly; returns revision count."""
+        cursor = self._connection.execute("DELETE FROM claims WHERE claim_id=?", (claim_id,))
+        self._connection.commit()
+        return cursor.rowcount
+
     def close(self) -> None:
         self._connection.close()
 
@@ -220,7 +275,10 @@ class SQLiteAtlasStore:
         registry = AtlasRegistry()
         for record in self.all_records():
             registry.upsert(record)
-        return AtlasService(registry, self.graph(), claims or ClaimStore())
+        persisted_claims = ClaimStore()
+        for claim in self.all_claims():
+            persisted_claims.add(claim)
+        return AtlasService(registry, self.graph(), claims if claims is not None else persisted_claims)
 
     def save_service(self, service: AtlasService) -> int:
         """Persist everything currently in an AtlasService's registry and graph.
@@ -233,6 +291,8 @@ class SQLiteAtlasStore:
         count = self.upsert_many(service.registry.all())
         for relation in service.graph.relations():
             self.put_relation(relation)
+        for claim in service.claims.all():
+            self.upsert_claim(claim)
         return count
 
     def __enter__(self) -> "SQLiteAtlasStore":
