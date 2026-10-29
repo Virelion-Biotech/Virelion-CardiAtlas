@@ -19,3 +19,10 @@ def test_taxon_set_normalizes_known_common_species_aliases():
     assert _taxon_species_set("human; mouse") == _taxon_species_set(
         "Mus musculus, Homo sapiens"
     )
+
+
+
+def test_taxon_set_normalizes_and_separator():
+    assert _taxon_species_set("human and mouse") == _taxon_species_set(
+        "Homo sapiens; Mus musculus"
+    )

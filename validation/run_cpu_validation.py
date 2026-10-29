@@ -38,7 +38,7 @@ def _taxon_species_set(value: object) -> frozenset[str]:
     if isinstance(value, (list, tuple, set)):
         parts = [str(item).strip() for item in value]
     else:
-        parts = re.split(r";|,|\\s+and\\s+", str(value), flags=re.IGNORECASE)
+        parts = re.split(r";|,|\s+and\s+", str(value), flags=re.IGNORECASE)
     return frozenset(
         canonical_key(normalize_species(part.strip()))
         for part in parts
