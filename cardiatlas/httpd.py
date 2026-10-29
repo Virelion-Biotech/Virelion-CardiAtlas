@@ -41,6 +41,9 @@ def _request_api(base_api: AtlasAPI, payload: dict[str, Any]) -> AtlasAPI:
 
     service = AtlasService.empty()
     service.add_many(base_api.service.registry.all())
+    for relation in base_api.service.graph.relations():
+        service.graph.add(relation)
+    service.claims = base_api.service.claims
     for index, raw in enumerate(raw_records):
         if not isinstance(raw, dict):
             raise ValueError(f"records[{index}] must be an object")
@@ -149,15 +152,54 @@ def _make_handler(api: AtlasAPI) -> type[BaseHTTPRequestHandler]:
                 self._send_json(404, {"error": f"not found: {self.path}"})
 
         def do_POST(self) -> None:  # noqa: N802
-            if self.path not in {"/v1/atlas/search", "/v1/atlas/context"}:
+            routes = {
+                "/v1/atlas/search", "/v1/atlas/context", "/v1/atlas/retrieve",
+                "/v1/atlas/explain", "/v1/atlas/claim", "/v1/atlas/claims",
+                "/v1/atlas/dataset/readiness", "/v1/atlas/graph",
+            }
+            if self.path not in routes:
                 self._send_json(404, {"error": f"not found: {self.path}"})
                 return
             try:
                 payload = self._read_json()
                 if self.path == "/v1/atlas/search":
                     result = _search_response(api, payload)
-                else:
+                elif self.path == "/v1/atlas/context":
                     result = _context_response(api, payload)
+                elif self.path == "/v1/atlas/retrieve":
+                    query = payload.get("query", "")
+                    if not isinstance(query, str):
+                        raise ValueError("query must be a string")
+                    record_type = payload.get("record_type")
+                    raw_limit = payload.get("limit", 20)
+                    if record_type is not None and not isinstance(record_type, str):
+                        raise ValueError("record_type must be a string or null")
+                    if isinstance(raw_limit, bool) or not isinstance(raw_limit, int) or not 0 <= raw_limit <= MAX_SEARCH_LIMIT:
+                        raise ValueError(f"limit must be an integer between 0 and {MAX_SEARCH_LIMIT}")
+                    result = api.retrieve(query, record_type=record_type, limit=raw_limit)
+                elif self.path == "/v1/atlas/explain":
+                    record_id = payload.get("record_id")
+                    if not isinstance(record_id, str) or not record_id:
+                        raise ValueError("record_id must be a non-empty string")
+                    result = api.explain(record_id)
+                elif self.path == "/v1/atlas/claim":
+                    claim_id = payload.get("claim_id")
+                    if not isinstance(claim_id, str) or not claim_id:
+                        raise ValueError("claim_id must be a non-empty string")
+                    result = api.claim(claim_id)
+                elif self.path == "/v1/atlas/claims":
+                    result = api.claims()
+                elif self.path == "/v1/atlas/dataset/readiness":
+                    study_id, dataset_id = payload.get("study_id"), payload.get("dataset_id")
+                    if not isinstance(study_id, str) or not isinstance(dataset_id, str):
+                        raise ValueError("study_id and dataset_id must be strings")
+                    result = api.dataset_readiness(study_id, dataset_id)
+                else:
+                    record_id = payload.get("record_id")
+                    hops = payload.get("hops", 1)
+                    if not isinstance(record_id, str) or type(hops) is not int or hops < 0:
+                        raise ValueError("record_id must be a string and hops a non-negative integer")
+                    result = api.graph(record_id, hops=hops)
             except (KeyError, TypeError, ValueError) as exc:
                 self._send_json(400, {"error": str(exc)})
                 return
@@ -189,6 +231,12 @@ def serve(db_path: str, host: str = "127.0.0.1", port: int = DEFAULT_PORT) -> No
     print("  GET  /health")
     print("  POST /v1/atlas/search    {query|text, record_type?, tags?, limit?, records?}")
     print("  POST /v1/atlas/context   {record_ids?, context_id?, entity_id?, records?}")
+    print("  POST /v1/atlas/retrieve  {query, record_type?, limit?}")
+    print("  POST /v1/atlas/explain   {record_id}")
+    print("  POST /v1/atlas/claim     {claim_id}")
+    print("  POST /v1/atlas/claims    {}")
+    print("  POST /v1/atlas/dataset/readiness {study_id, dataset_id}")
+    print("  POST /v1/atlas/graph     {record_id, hops?}")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

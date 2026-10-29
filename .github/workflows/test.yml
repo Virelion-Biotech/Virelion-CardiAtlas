@@ -97,6 +97,22 @@ jobs:
           curl -sf -H 'Content-Type: application/json' -X POST http://127.0.0.1:8420/v1/atlas/context -d '{"record_ids":["marker:postn"]}' | python -c "import json,sys; d=json.load(sys.stdin); assert d['context']['marker_ids'] == ['marker:postn'], d"
           kill $SERVER_PID
           trap - EXIT
+      - name: Exercise claim persistence, source readiness and retrieval benchmark
+        run: |
+          rm -f /tmp/cardiatlas-reference.sqlite
+          cardiatlas load /tmp/cardiatlas-reference.sqlite data/reference/cardiatlas_gse132880.jsonl --relations data/reference/cardiatlas_gse132880_relationships.jsonl
+          cardiatlas claims-load /tmp/cardiatlas-reference.sqlite data/reference/cardiatlas_gse132880_claims.jsonl
+          cardiatlas release-check --db /tmp/cardiatlas-reference.sqlite > /tmp/cardiatlas-release-check.json
+          python -c "import json; d=json.load(open('/tmp/cardiatlas-release-check.json')); assert d['passed'], d"
+          python scripts/evaluate_retrieval.py --output /tmp/cardiatlas-retrieval.json
+          python -c "import json; d=json.load(open('/tmp/cardiatlas-retrieval.json')); assert d['hit_rate_at_k'] == 1.0 and d['query_count'] >= 3, d"
+          python - <<'PY'
+          from cardiatlas.sqlite import SQLiteAtlasStore
+          with SQLiteAtlasStore('/tmp/cardiatlas-reference.sqlite') as store:
+              service = store.load_service()
+              assert service.claims.get('claim:gse132880:design').version == 1
+              assert len(store.claim_history('claim:gse132880:design')) == 1
+          PY
       - name: Exercise GEO SOFT parser
         run: |
           python - <<'PY'

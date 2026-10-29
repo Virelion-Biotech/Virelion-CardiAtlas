@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelionbiotech.netlify.app/schemas/claim_evidence.schema.json",
+  "title": "CardiAtlas Claim Evidence Locator",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_id",
+    "source_locator",
+    "review_status"
+  ],
+  "properties": {
+    "evidence_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_locator": {
+      "type": "string"
+    },
+    "locator_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "locator_label": {
+      "type": "string"
+    },
+    "quote": {
+      "type": "string"
+    },
+    "review_status": {
+      "enum": [
+        "unreviewed",
+        "source_verified",
+        "expert_reviewed",
+        "rejected"
+      ]
+    },
+    "reviewer_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reviewed_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "review_status": {
+            "enum": [
+              "source_verified",
+              "expert_reviewed"
+            ]
+          }
+        },
+        "required": [
+          "review_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "source_locator": {
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "review_status": {
+            "const": "expert_reviewed"
+          }
+        },
+        "required": [
+          "review_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reviewer_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reviewer_id"
+        ]
+      }
+    }
+  ]
+}

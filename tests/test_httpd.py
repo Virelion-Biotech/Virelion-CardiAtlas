@@ -167,3 +167,21 @@ def test_bad_json_is_400(running_server):
     with pytest.raises(urllib.error.HTTPError) as excinfo:
         urllib.request.urlopen(req)
     assert excinfo.value.code == 400
+
+
+
+def test_new_retrieval_and_explain_routes(running_server):
+    status, body = _post(f"{running_server}/v1/atlas/retrieve", {"query": "POSTN", "limit": 5})
+    assert status == 200
+    assert body["results"][0]["record"]["id"] == "marker:postn"
+    assert 0 < body["results"][0]["lexical_score"] <= 1
+
+    status, body = _post(f"{running_server}/v1/atlas/explain", {"record_id": "marker:postn"})
+    assert status == 200
+    assert body["record"]["id"] == "marker:postn"
+
+
+def test_retrieval_route_rejects_boolean_limit(running_server):
+    status, body = _post(f"{running_server}/v1/atlas/retrieve", {"query": "POSTN", "limit": True})
+    assert status == 400
+    assert "limit" in body["error"]

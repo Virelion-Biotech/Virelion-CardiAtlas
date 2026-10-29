@@ -113,10 +113,11 @@ class AtlasService:
         # docs/data-model.md defines the controlled direction as
         # "study -> has_dataset -> dataset"; "has_study" is not a
         # recognized predicate in schema.RELATION_TYPES.
-        self.relate(study.id, "has_dataset", dataset.id, confidence=1.0, source="cardiatlas:geo-reconstruction")
+        supporting_sources = tuple(dataset.evidence_ids)
+        self.relate(study.id, "has_dataset", dataset.id, evidence_ids=supporting_sources, confidence=1.0, source="cardiatlas:geo-reconstruction")
         for sample in samples:
-            self.relate(study.id, "has_sample", sample.id, confidence=1.0, source="cardiatlas:geo-reconstruction")
-            self.relate(dataset.id, "has_sample", sample.id, confidence=1.0, source="cardiatlas:geo-reconstruction")
+            self.relate(study.id, "has_sample", sample.id, evidence_ids=supporting_sources, confidence=1.0, source="cardiatlas:geo-reconstruction")
+            self.relate(dataset.id, "has_sample", sample.id, evidence_ids=supporting_sources, confidence=1.0, source="cardiatlas:geo-reconstruction")
         return study, samples, report
 
     def assess_dataset(self, dataset_id: str) -> dict[str, object]:
@@ -154,7 +155,10 @@ class AtlasService:
         return create_manifest(self.registry.all(), version, schema_version)
 
     def release_readiness(self) -> ReleaseReadiness:
-        return assess_release(self.registry.all(), self.graph.relations())
+        return assess_release(
+            self.registry.all(), self.graph.relations(), claims=self.claims.all(),
+            require_benchmark_ready=True, require_claim_review=True,
+        )
 
     def corpus_report(self) -> CorpusReport:
         return corpus_report(self.registry.all())

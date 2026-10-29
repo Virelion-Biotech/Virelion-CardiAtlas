@@ -17,7 +17,9 @@ CardiAtlas is a Python library for representing and retrieving cardiac biomedica
 Evidence and limits: [repository report](validation/README.md). The [organization status index](https://github.com/Virelion-Biotech/Virelion-HeartTwin/blob/main/docs/STACK_VALIDATION_STATUS.md) separates software, numerical, data-readiness and empirical qualification. Code/schema execution or a completed download is not a substitute for endpoint-specific validation.
 <!-- VALIDATION_PRODUCT_STATUS:END -->
 
-## CPU audit (0.9.0)
+## CPU audit (0.9.0 baseline)
+
+The baseline audit predates the claim-persistence, retrieval and GSE132880 changes on the current feature branch. The branch's new tests and CI must pass before its updated implementation metrics are claimed.
 
 142 local tests pass with 82.10% coverage. All 21 reference records pass runtime and JSON Schema validation. Reproducible source checks validate eight live GSE153480 samples and the bibliographic identity of six optical references. **GSE153480 still lacks explicit subject IDs and remains blocked for benchmark readiness.** Core graph citations and biological claim correctness remain incomplete. See the [audit and limits](validation/README.md).
 
@@ -94,8 +96,7 @@ cardiatlas serve atlas.sqlite --host 0.0.0.0 --port 8420
 # set CARDIATLAS_URL=http://<host>:8420 in HeartTwin
 ```
 
-The server implements `GET /health`, `POST /v1/atlas/search`, and
-`POST /v1/atlas/context`. Its responses match HeartTwin's native CardiAtlas
+The server implements `GET /health`, search/context, partial-match retrieval, record explanation, claim listing/detail, dataset readiness, and graph-context reads under `/v1/atlas/*`. It exposes only read endpoints; claim edits and release promotion remain curator/CI operations. Its responses match HeartTwin's native CardiAtlas
 adapter shape; optional request-local `records` are overlaid without changing
 the persistent store. See `docs/HEARTTWIN_INTEGRATION.md` for the exact
 request/response contract.
@@ -114,6 +115,24 @@ cardiatlas release deprecate atlas.sqlite 1.2.0 --superseded-by 1.3.0
 ```
 
 Every promotion/verification re-derives the release's record digest and separate relationship digest from what's currently in the store and refuses to proceed if it no longer matches what was staged -- so a `verified` release always reflects an exact, unchanged record and relationship set. Legacy lifecycle records without a relationship digest must be restaged. `verify` also requires an explicit commit SHA and confirmed CI status from the caller, since CardiAtlas has no way to observe either fact on its own.
+
+## Versioned claims and evidence provenance
+
+Claims use the independent `Claim` / `ClaimEvidence` contract (`schema_version=1.0`). Every citation records a stable evidence ID, a source locator (URL plus section/figure/table/paragraph locator), a short source excerpt, and a review status. `source_verified` describes a source-location check; `expert_reviewed` requires a reviewer identity. These statuses are not interchangeable with proof of a causal or therapeutic claim.
+
+Claim revisions are stored in SQLite as immutable `(claim_id, version)` rows. The service returns the latest revision, and `claim_history` provides previous revisions. Release manifests lock the claim-set digest independently of record and relationship digests; promoting a changed claim set requires restaging the release.
+
+```bash
+# First load the evidence and metadata, then load claims (IDs are linked by exact string).
+cardiatlas load atlas.sqlite data/reference/cardiatlas_gse132880.jsonl --relations data/reference/cardiatlas_gse132880_relationships.jsonl
+cardiatlas claims-load atlas.sqlite data/reference/cardiatlas_gse132880_claims.jsonl
+
+# Readiness must be earned from the study/sample metadata.
+cardiatlas release-check --db atlas.sqlite
+python scripts/evaluate_retrieval.py --output retrieval-smoke-results.json
+```
+
+The GSE132880 reference bundle is an eight-sample mouse cardiac-endothelial scRNA-seq metadata benchmark with four healthy and four seven-day post-MI hearts, based on the public [NCBI GEO Series](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE132880). It stores metadata and source links, not the source expression matrix. The sample-title numeric labels are recorded as source-derived subject labels; a domain reviewer should confirm the mapping before formal held-out-subject modelling. The retrieval fixture is a smoke benchmark, not an independently annotated relevance gold standard.
 
 ## Other CLI commands
 

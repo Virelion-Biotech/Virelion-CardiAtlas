@@ -80,5 +80,50 @@ class AtlasAPI:
     def corpus(self) -> dict[str, object]:
         return corpus_report(self.service.registry.all()).to_dict()
 
+    def claim(self, claim_id: str) -> dict[str, object]:
+        """Return claim status, source-located support, and linked evidence records."""
+        claim = self.service.claims.get(claim_id)
+        evidence_index = {
+            item.id: item for item in self.service.registry.all("evidence")
+            if hasattr(item, "source_identifier")
+        }
+        assessment = self.service.assess_claim(claim_id)
+        citations = []
+        for citation in claim.citations:
+            linked = evidence_index.get(citation.evidence_id)
+            citations.append({
+                **citation.to_dict(),
+                "evidence_record": linked.to_dict() if linked else None,
+            })
+        return {
+            "claim": claim.to_dict(),
+            "assessment": {
+                "status": assessment.status,
+                "evidence_count": assessment.evidence_count,
+                "supporting_evidence": list(assessment.supporting_evidence),
+                "refuting_evidence": list(assessment.refuting_evidence),
+                "mixed_evidence": list(assessment.mixed_evidence),
+                "unknown_evidence": list(assessment.unknown_evidence),
+            },
+            "citations": citations,
+            "missing_evidence_ids": sorted(set(claim.evidence_ids) - set(evidence_index)),
+        }
+
+    def claims(self) -> dict[str, object]:
+        return {"count": len(self.service.claims.all()), "claims": [item.to_dict() for item in self.service.claims.all()]}
+
+    def dataset_readiness(self, study_id: str, dataset_id: str) -> dict[str, object]:
+        return self.service.assess_study_benchmark_readiness(study_id, dataset_id).to_dict()
+
+    def graph(self, record_id: str, hops: int = 1) -> dict[str, object]:
+        record = self.service.registry.get(record_id)
+        if record is None:
+            raise KeyError(record_id)
+        return {
+            "record": record.to_dict(),
+            "context": self.service.context(record_id, hops=hops),
+            "explanation": self.service.explain(record_id),
+        }
+
     def snapshot(self, version: str = "0.0.0") -> dict[str, object]:
         return self.service.release_manifest(version).to_dict()

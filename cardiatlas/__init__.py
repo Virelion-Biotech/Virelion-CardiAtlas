@@ -4,7 +4,7 @@ from .acquisition import AcquisitionTarget, acquisition_plan, plan_as_dict
 from .api import AtlasAPI
 from .build import ReferenceBuild, build_reference, populate_registry
 from .catalog import CatalogGroup, attach_datasets, group_datasets
-from .claims import Claim, ClaimAssessment, ClaimStore
+from .claims import Claim, ClaimAssessment, ClaimEvidence, ClaimStore
 from .contracts import AtlasContext, context_from_dict
 from .corpus import CorpusReport, corpus_report
 from .diff import SnapshotDiff, diff_records
