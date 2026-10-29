@@ -47,7 +47,7 @@ from .study_readiness import StudyBenchmarkReadiness, assess_study_benchmark_rea
 
 __all__ = [
     "AcquisitionTarget", "AtlasAPI", "AtlasContext", "AtlasGraph", "AtlasRecord", "AtlasRegistry", "AtlasService",
-    "BenchmarkCandidate", "CatalogGroup", "CellStateRecord", "Claim", "ClaimAssessment", "ClaimStore", "Concept",
+    "BenchmarkCandidate", "CatalogGroup", "CellStateRecord", "Claim", "ClaimAssessment", "ClaimEvidence", "ClaimStore", "Concept",
     "CorpusReport", "DatasetRecord", "DEFAULT_PORT", "EvidenceRecord", "EvidenceScore", "GeoReconstructionBundle", "GeoSoftSample", "HarvestBatch", "HarvestItem", "HarvestManifest", "HarvestQC", "HarmonizedValue", "IdentifierResolution",
     "InterventionRecord", "MarkerRecord", "PhenotypeRecord", "PromotionDecision", "ProvenanceBundle", "ProvenanceEvent", "Query", "QueryHit",
     "QualityReport", "ReconstructionDecision", "ReconstructionReport", "ReferenceBuild", "Relation", "RELEASE_STATES", "ReleaseCheck", "ReleaseManifest", "ReleaseReadiness", "ReleaseRecord", "RetrievalResult",

@@ -81,9 +81,13 @@ def retrieve(
         if terms and not matched:
             continue
         coverage = len(matched) / len(terms) if terms else 0.0
-        phrase = canonical_key(query) in haystack if query.strip() else False
-        name_or_id = canonical_key(query) in {canonical_key(record.name), canonical_key(record.id)} if query.strip() else False
-        lexical = round(min(1.0, 0.75 * coverage + 0.15 * float(phrase) + 0.10 * float(name_or_id)), 6) if terms else 0.0
+        normalized_query = canonical_key(query)
+        phrase = normalized_query in haystack if query.strip() else False
+        exact_field = normalized_query in fields if query.strip() else False
+        name_or_id = normalized_query in {canonical_key(record.name), canonical_key(record.id)} if query.strip() else False
+        # Exact field matches beat incidental substrings (for example, tag "MI"
+        # should outrank the phrase "MI single-cell study" in an evidence title).
+        lexical = round(min(1.0, 0.65 * coverage + 0.15 * float(phrase) + 0.15 * float(exact_field) + 0.05 * float(name_or_id)), 6) if terms else 0.0
         evidence_ids = getattr(record, "evidence_ids", []) or []
         evidence_records = [evidence_index[eid] for eid in evidence_ids if eid in evidence_index]
         evidence_score: EvidenceScore | None = score_evidence(evidence_records) if evidence_records else None
