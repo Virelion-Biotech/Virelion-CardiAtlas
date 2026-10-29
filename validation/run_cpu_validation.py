@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import platform
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,10 +22,28 @@ from cardiatlas.geo_soft import parse_geo_soft_bytes, samples_to_rows
 from cardiatlas.loader import read_bundle
 from cardiatlas.models import DatasetRecord
 from cardiatlas.ncbi import NcbiClient
-from cardiatlas.normalize import canonical_key
+from cardiatlas.normalize import canonical_key, normalize_species
 from cardiatlas.study_readiness import assess_study_benchmark_readiness
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _taxon_species_set(value: object) -> frozenset[str]:
+    """Canonicalize a source taxonomy string while preserving mixed-species scope.
+
+    NCBI summaries have represented the same multi-species taxon list with
+    semicolons or commas. Compare sets of species rather than punctuation or
+    ordering, without collapsing a genuinely mixed-species record to one taxon.
+    """
+    if isinstance(value, (list, tuple, set)):
+        parts = [str(item).strip() for item in value]
+    else:
+        parts = re.split(r";|,|\s+and\s+", str(value), flags=re.IGNORECASE)
+    return frozenset(
+        canonical_key(normalize_species(part.strip()))
+        for part in parts
+        if part and part.strip()
+    )
 
 
 def run(live=False):
@@ -72,7 +91,10 @@ def run(live=False):
             assert len(matches) == 1
             row = matches[0]
         assert record.study_title == row["title"]
-        assert record.organism == row["taxon"]
+        assert _taxon_species_set(record.organism) == _taxon_species_set(row["taxon"]), (
+            f"{record.accession}: curated taxa {record.organism!r} differ from "
+            f"live/source taxa {row['taxon']!r}"
+        )
         assert record.sample_count == row["n_samples"]
         catalog_checks.append({"accession": record.accession, "title_taxon_sample_inventory_match": True,
                                "sample_records": record.sample_count, "taxon": record.organism})

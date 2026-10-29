@@ -3,6 +3,12 @@ name: GEO live smoke
 on:
   push:
     branches: [main]
+  pull_request:
+    paths:
+      - "validation/**"
+      - "cardiatlas/**"
+      - "data/reference/**"
+      - ".github/workflows/geo-live-smoke.yml"
   workflow_dispatch:
 
 jobs:
