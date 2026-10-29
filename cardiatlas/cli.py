@@ -161,7 +161,8 @@ def build_parser() -> argparse.ArgumentParser:
     verify_cmd.add_argument("version")
     verify_cmd.add_argument("--commit", required=True, dest="commit_sha", help="the exact commit the release was built from")
     verify_cmd.add_argument("--ci-passed", action="store_true", help="confirm CI passed on that commit (required to verify)")
-    verify_cmd.add_argument("--require-benchmark-ready", action="store_true", help="also require every study in the release to pass its benchmark-readiness gate")
+    verify_cmd.add_argument("--require-benchmark-ready", action="store_true", help="explicitly require every study to pass benchmark-readiness (the default)")
+    verify_cmd.add_argument("--allow-unready-studies", action="store_true", help="explicit research-only opt-out; do not use for releases claimed benchmark-ready")
     deprecate_cmd = lifecycle_sub.add_parser("deprecate", help="mark a release deprecated, retained for reproducibility")
     deprecate_cmd.add_argument("db")
     deprecate_cmd.add_argument("version")
@@ -463,7 +464,7 @@ def main(argv: list[str] | None = None) -> int:
                     release = verify(
                         existing, records, relations,
                         commit_sha=args.commit_sha, ci_passed=args.ci_passed,
-                        require_benchmark_ready=args.require_benchmark_ready,
+                        require_benchmark_ready=(args.require_benchmark_ready or not args.allow_unready_studies),
                         claims=store.all_claims(),
                     )
                 except ValueError as exc:

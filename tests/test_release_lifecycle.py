@@ -109,3 +109,48 @@ def test_sqlite_persists_lifecycle_across_reopen(tmp_path: Path):
         assert [r["state"] for r in reopened.list_release_records()] == ["candidate"]
         assert reopened.list_release_records(state="candidate")
         assert reopened.list_release_records(state="verified") == []
+
+
+
+def test_verified_release_requires_benchmark_ready_by_default():
+    from cardiatlas.claims import Claim, ClaimEvidence
+    from cardiatlas.models import DatasetRecord, EvidenceRecord, SampleRecord, StudyRecord
+    from cardiatlas.release_lifecycle import create_draft, promote_to_candidate, verify
+    import pytest
+
+    source = EvidenceRecord(
+        id="evidence:dataset", name="Dataset source", source_type="geo",
+        source_identifier="GSE-test", evidence_level="database",
+    )
+    dataset = DatasetRecord(
+        id="dataset:test", name="Test dataset", accession="GSEtest", repository="GEO",
+        organism="Mus musculus", tissue="heart", source_ids=[source.id],
+        evidence_ids=[source.id], sample_count=2, modalities=["scrna"],
+        study_id="study:test", conditions=["healthy_control", "myocardial_infarction"],
+    )
+    study = StudyRecord(
+        id="study:test", name="Test study", accession="GSEtest", repository="GEO",
+        title="Test study", organism="Mus musculus", tissues=["heart"], modalities=["scrna"],
+        dataset_ids=[dataset.id], evidence_ids=[source.id],
+    )
+    samples = [
+        SampleRecord(id="sample:a", name="A", accession="GSM1", dataset_id=dataset.id,
+                     study_id=study.id, subject_id=None, tissue="heart", condition="healthy_control",
+                     modality="scrna"),
+        SampleRecord(id="sample:b", name="B", accession="GSM2", dataset_id=dataset.id,
+                     study_id=study.id, subject_id=None, tissue="heart", condition="myocardial_infarction",
+                     modality="scrna"),
+    ]
+    citation = ClaimEvidence(
+        evidence_id=source.id, source_locator="https://example.org/study",
+        review_status="source_verified", locator_label="Study design",
+    )
+    claim = Claim(
+        id="claim:test", subject=study.id, predicate="has_design", object="test design",
+        polarity="supports", evidence_ids=(source.id,), citations=(citation,),
+    )
+    records = [source, dataset, study, *samples]
+    staged = create_draft(records, "9.0.0", claims=[claim])
+    candidate = promote_to_candidate(staged, records, claims=[claim])
+    with pytest.raises(ValueError, match="benchmark_readiness"):
+        verify(candidate, records, commit_sha="abc123", ci_passed=True, claims=[claim])

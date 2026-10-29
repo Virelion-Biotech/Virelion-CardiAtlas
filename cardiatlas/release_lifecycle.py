@@ -209,7 +209,7 @@ def verify(
     *,
     commit_sha: str,
     ci_passed: bool,
-    require_benchmark_ready: bool = False,
+    require_benchmark_ready: bool = True,
     claims: Iterable[Claim] = (),
 ) -> ReleaseRecord:
     """candidate -> verified: closed evidence graph, exact commit, passing CI.
