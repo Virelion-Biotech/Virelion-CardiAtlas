@@ -65,3 +65,21 @@ def test_product_is_first_class_registry_record():
     registry = AtlasRegistry()
     registry.add(record)
     assert registry.get("product-registry").record_type == "therapeutic_product"
+
+
+def test_product_round_trips_through_atlas_loader():
+    from cardiatlas.loader import record_from_dict
+
+    record = TherapeuticProductRecord(
+        id="product-roundtrip", name="Example product", modality="autologous_cell",
+        intended_indication="ischemic heart failure",
+        manufacturing=ManufacturingProfile(autologous_or_allogeneic="autologous"),
+        potency_assays=[PotencyAssay(
+            assay_name="paced contraction", biological_function="contractility",
+            method="optical motion tracking",
+        )],
+    )
+    restored = record_from_dict(record.to_dict())
+    assert isinstance(restored, TherapeuticProductRecord)
+    assert restored.manufacturing.autologous_or_allogeneic == "autologous"
+    assert restored.potency_assays[0].biological_function == "contractility"
