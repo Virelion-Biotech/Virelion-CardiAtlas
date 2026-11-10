@@ -11,6 +11,7 @@ RECORD_TYPES = (
     "study",
     "sample",
     "intervention",
+    "therapeutic_product",
 )
 
 ID_NAMESPACES = {
@@ -22,6 +23,7 @@ ID_NAMESPACES = {
     "study": "study",
     "sample": "sample",
     "intervention": "intervention",
+    "therapeutic_product": "therapeutic-product",
 }
 
 RELATION_TYPES = (
