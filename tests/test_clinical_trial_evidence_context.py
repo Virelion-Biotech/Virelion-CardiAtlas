@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 from cardiatlas.loader import read_bundle
