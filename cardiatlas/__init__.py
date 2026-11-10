@@ -43,6 +43,7 @@ from .service import AtlasService
 from .sources import SourceResult, ingest_source
 from .sqlite import SQLiteAtlasStore
 from .studies import StudyQC, assess_study, study_from_datasets
+from .therapeutic_products import ManufacturingProfile, PotencyAssay, ProductRegulatoryRecord, TherapeuticProductRecord
 from .study_readiness import StudyBenchmarkReadiness, assess_study_benchmark_readiness
 
 __all__ = [
@@ -51,7 +52,7 @@ __all__ = [
     "CorpusReport", "DatasetRecord", "DEFAULT_PORT", "EvidenceRecord", "EvidenceScore", "GeoReconstructionBundle", "GeoSoftSample", "HarvestBatch", "HarvestItem", "HarvestManifest", "HarvestQC", "HarmonizedValue", "IdentifierResolution",
     "InterventionRecord", "MarkerRecord", "PhenotypeRecord", "PromotionDecision", "ProvenanceBundle", "ProvenanceEvent", "Query", "QueryHit",
     "QualityReport", "ReconstructionDecision", "ReconstructionReport", "ReferenceBuild", "Relation", "RELEASE_STATES", "ReleaseCheck", "ReleaseManifest", "ReleaseReadiness", "ReleaseRecord", "RetrievalResult",
-    "SampleRecord", "SnapshotDiff", "SourceResult", "SQLiteAtlasStore", "StateTransition", "StudyBenchmarkReadiness", "StudyQC", "StudyRecord", "acquisition_plan",
+    "SampleRecord", "SnapshotDiff", "ManufacturingProfile", "PotencyAssay", "ProductRegulatoryRecord", "TherapeuticProductRecord", "SourceResult", "SQLiteAtlasStore", "StateTransition", "StudyBenchmarkReadiness", "StudyQC", "StudyRecord", "acquisition_plan",
     "assess_dataset", "assess_harvest", "assess_release", "assess_study", "assess_study_benchmark_readiness", "attach_datasets", "audit_datasets", "benchmark_readiness", "build_reference", "build_server",
     "canonical_concept_id", "canonical_digest", "canonical_key", "concepts_by_category", "context_from_dict", "corpus_report", "create_draft", "create_harvest_manifest", "create_manifest",
     "dataset_to_benchmark_candidate", "decide_promotion", "deduplicate_harvest", "deprecate", "descendants", "diff_records", "digest_records", "graph_context", "group_datasets",
