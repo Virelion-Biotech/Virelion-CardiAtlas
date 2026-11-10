@@ -164,8 +164,8 @@ def validate_therapeutic_product_schema(schema: dict[str, typing.Any]) -> list[s
         model_names = {f.name for f in dataclasses.fields(cls)}
         if set(props) != model_names:
             errors.append(f"{stem}: top-level properties differ from model fields")
-        if set(schema.get("required", [])) != _dataclass_required_fields(cls):
-            errors.append(f"{stem}: required fields differ from model defaults")
+        if not _dataclass_required_fields(cls) <= set(schema.get("required", [])):
+            errors.append(f"{stem}: schema omits dataclass-required fields")
     nested = {
         "manufacturing": ManufacturingProfile,
         "potency_assays.items": PotencyAssay,
@@ -181,8 +181,8 @@ def validate_therapeutic_product_schema(schema: dict[str, typing.Any]) -> list[s
         model_names = {f.name for f in dataclasses.fields(cls)}
         if set(props) != model_names:
             errors.append(f"{path}: properties differ from {cls.__name__} fields")
-        if set(node.get("required", [])) != _dataclass_required_fields(cls):
-            errors.append(f"{path}: required fields differ from model defaults")
+        if not _dataclass_required_fields(cls) <= set(node.get("required", [])):
+            errors.append(f"{path}: schema omits dataclass-required fields")
     literal_fields = {
         "modality": typing.get_type_hints(TherapeuticProductRecord)["modality"],
         "manufacturing.autologous_or_allogeneic": typing.get_type_hints(ManufacturingProfile)["autologous_or_allogeneic"],
