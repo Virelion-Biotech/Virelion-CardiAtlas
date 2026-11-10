@@ -8,6 +8,7 @@ from typing import Iterable
 from .migrate import migrate_payload
 from .models import CellStateRecord, DatasetRecord, EvidenceRecord, InterventionRecord, MarkerRecord, PhenotypeRecord, SampleRecord, StudyRecord, Record
 from .registry import AtlasRegistry
+from .therapeutic_products import TherapeuticProductRecord
 from .validation import require_valid
 
 _RECORD_CLASSES = {
@@ -19,6 +20,7 @@ _RECORD_CLASSES = {
     "study": StudyRecord,
     "sample": SampleRecord,
     "intervention": InterventionRecord,
+    "therapeutic_product": TherapeuticProductRecord,
 }
 
 
