@@ -5,9 +5,14 @@
   "description": "Product-centred research metadata. Does not establish product quality, potency, efficacy, authorization or clinical readiness.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "name", "modality", "intended_indication", "manufacturing", "quality_attributes", "potency_assays", "release_criteria", "stability", "regulatory_records", "evidence_ids", "version", "schema_version"],
+  "required": ["id", "record_type", "name", "modality", "intended_indication", "manufacturing", "quality_attributes", "potency_assays", "release_criteria", "stability", "regulatory_records", "evidence_ids", "version", "schema_version", "product_schema_version"],
   "properties": {
     "id": {"type": "string", "minLength": 1},
+    "record_type": {"const": "therapeutic_product"},
+    "description": {"type": "string"},
+    "source_ids": {"type": "array", "items": {"type": "string"}},
+    "tags": {"type": "array", "items": {"type": "string"}},
+    "metadata": {"type": "object"},
     "name": {"type": "string", "minLength": 1},
     "modality": {"enum": ["autologous_cell", "allogeneic_cell", "engineered_tissue", "gene_therapy", "gene_editing", "cell_gene_combination", "secretome", "other"]},
     "intended_indication": {"type": "string", "minLength": 1},
@@ -52,6 +57,7 @@
     "version": {"type": "integer", "minimum": 1},
     "supersedes": {"type": ["string", "null"]},
     "limitations": {"type": "array", "items": {"type": "string"}},
-    "schema_version": {"const": "1.0"}
+    "schema_version": {"const": "0.3"},
+    "product_schema_version": {"const": "1.0"}
   }
 }
