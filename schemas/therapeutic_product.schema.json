@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas/therapeutic_product.schema.json",
+  "title": "CardiAtlas Therapeutic Product Evidence Record",
+  "description": "Product-centred research metadata. Does not establish product quality, potency, efficacy, authorization or clinical readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "record_type", "name", "modality", "intended_indication", "manufacturing", "quality_attributes", "potency_assays", "release_criteria", "stability", "regulatory_records", "evidence_ids", "version", "schema_version", "product_schema_version"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "record_type": {"const": "therapeutic_product"},
+    "description": {"type": "string"},
+    "source_ids": {"type": "array", "items": {"type": "string"}},
+    "tags": {"type": "array", "items": {"type": "string"}},
+    "metadata": {"type": "object"},
+    "name": {"type": "string", "minLength": 1},
+    "modality": {"enum": ["autologous_cell", "allogeneic_cell", "engineered_tissue", "gene_therapy", "gene_editing", "cell_gene_combination", "secretome", "other"]},
+    "intended_indication": {"type": "string", "minLength": 1},
+    "product_identity": {"type": "object"},
+    "genetic_target": {"type": ["string", "null"]},
+    "delivery_vector_or_construct": {"type": ["string", "null"]},
+    "cell_source_and_phenotype": {"type": ["string", "null"]},
+    "manufacturing": {"type": "object", "properties": {
+      "source_material": {"type": ["string", "null"]},
+      "autologous_or_allogeneic": {"enum": ["autologous", "allogeneic", "not_applicable", "unknown"]},
+      "expansion_or_processing": {"type": ["string", "null"]},
+      "purification": {"type": ["string", "null"]},
+      "delivery_route": {"type": ["string", "null"]},
+      "manufacturing_standard": {"type": ["string", "null"]},
+      "batch_count_reported": {"type": ["integer", "null"], "minimum": 0},
+      "batch_variability": {"type": ["string", "null"]},
+      "process_parameters": {"type": "object"}
+    }, "additionalProperties": false},
+    "quality_attributes": {"type": "object"},
+    "potency_assays": {"type": "array", "items": {"type": "object", "required": ["assay_name", "biological_function", "method"], "properties": {
+      "assay_name": {"type": "string", "minLength": 1},
+      "biological_function": {"type": "string", "minLength": 1},
+      "method": {"type": "string", "minLength": 1},
+      "result": {"type": ["string", "null"]},
+      "units": {"type": ["string", "null"]},
+      "acceptance_criterion": {"type": ["string", "null"]},
+      "evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+      "status": {"enum": ["not_reported", "reported", "source_verified", "expert_reviewed"]}
+    }, "additionalProperties": false}},
+    "release_criteria": {"type": "object"},
+    "stability": {"type": "object"},
+    "regulatory_records": {"type": "array", "items": {"type": "object", "required": ["jurisdiction", "status"], "properties": {
+      "jurisdiction": {"type": "string", "minLength": 1},
+      "status": {"enum": ["preclinical", "clinical_trial", "scientific_advice", "classification", "application_submitted", "authorized", "withdrawn", "unknown"]},
+      "authority": {"type": ["string", "null"]},
+      "procedure_or_trial_id": {"type": ["string", "null"]},
+      "as_of_date": {"type": ["string", "null"]},
+      "scope_note": {"type": "string"},
+      "evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+    }, "additionalProperties": false}},
+    "evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "version": {"type": "integer", "minimum": 1},
+    "supersedes": {"type": ["string", "null"]},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "schema_version": {"const": "0.3"},
+    "product_schema_version": {"const": "1.0"}
+  }
+}

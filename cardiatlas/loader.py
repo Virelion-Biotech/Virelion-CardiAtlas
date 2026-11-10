@@ -8,6 +8,7 @@ from typing import Iterable
 from .migrate import migrate_payload
 from .models import CellStateRecord, DatasetRecord, EvidenceRecord, InterventionRecord, MarkerRecord, PhenotypeRecord, SampleRecord, StudyRecord, Record
 from .registry import AtlasRegistry
+from .therapeutic_products import TherapeuticProductRecord
 from .validation import require_valid
 
 _RECORD_CLASSES = {
@@ -19,6 +20,7 @@ _RECORD_CLASSES = {
     "study": StudyRecord,
     "sample": SampleRecord,
     "intervention": InterventionRecord,
+    "therapeutic_product": TherapeuticProductRecord,
 }
 
 
@@ -30,6 +32,8 @@ def record_from_dict(payload: dict) -> Record:
     cls = _RECORD_CLASSES.get(record_type)
     if cls is None:
         raise ValueError(f"unsupported record_type: {record_type}")
+    if record_type == "therapeutic_product":
+        return require_valid(TherapeuticProductRecord.from_dict(payload))
     field_names = {field.name for field in cls.__dataclass_fields__.values() if field.init}
     unknown = set(payload) - field_names - {"record_type"}
     if unknown:

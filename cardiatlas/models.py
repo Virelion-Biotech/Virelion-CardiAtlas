@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, TYPE_CHECKING, Union
 
 EvidenceLevel = Literal["primary", "review", "database", "inferred", "curated"]
 EvidencePolarity = Literal["supports", "refutes", "mixed", "unknown"]
@@ -135,4 +135,7 @@ class InterventionRecord(AtlasRecord):
     phenotype_ids: list[str] = field(default_factory=list)
     evidence_ids: list[str] = field(default_factory=list)
 
-Record = EvidenceRecord | MarkerRecord | PhenotypeRecord | CellStateRecord | DatasetRecord | StudyRecord | SampleRecord | InterventionRecord
+if TYPE_CHECKING:
+    from .therapeutic_products import TherapeuticProductRecord
+
+Record = Union[EvidenceRecord, MarkerRecord, PhenotypeRecord, CellStateRecord, DatasetRecord, StudyRecord, SampleRecord, InterventionRecord, "TherapeuticProductRecord"]
