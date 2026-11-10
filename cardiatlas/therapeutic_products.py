@@ -29,7 +29,7 @@ class PotencyAssay:
     result: str | None = None
     units: str | None = None
     acceptance_criterion: str | None = None
-    evidence_ids: tuple[str, ...] = ()
+    evidence_ids: list[str] = field(default_factory=list)
     status: EvidenceStatus = "not_reported"
 
     def __post_init__(self) -> None:
@@ -73,35 +73,34 @@ class ProductRegulatoryRecord:
             raise ValueError("regulatory evidence_ids must be unique")
 
 
-@dataclass(frozen=True, slots=True)
-class TherapeuticProductRecord:
-    """Versionable product-centred record; all efficacy claims remain evidence-linked."""
-    id: str
-    name: str
-    modality: ProductModality
-    intended_indication: str
+@dataclass(slots=True)
+class TherapeuticProductRecord(AtlasRecord):
+    """Versionable first-class Atlas record; efficacy claims remain evidence-linked."""
+    record_type: str = field(default="therapeutic_product", init=False)
+    modality: ProductModality = "other"
+    intended_indication: str = ""
     product_identity: dict[str, Any] = field(default_factory=dict)
     genetic_target: str | None = None
     delivery_vector_or_construct: str | None = None
     cell_source_and_phenotype: str | None = None
     manufacturing: ManufacturingProfile = field(default_factory=ManufacturingProfile)
     quality_attributes: dict[str, Any] = field(default_factory=dict)
-    potency_assays: tuple[PotencyAssay, ...] = ()
+    potency_assays: list[PotencyAssay] = field(default_factory=list)
     release_criteria: dict[str, Any] = field(default_factory=dict)
     stability: dict[str, Any] = field(default_factory=dict)
-    regulatory_records: tuple[ProductRegulatoryRecord, ...] = ()
+    regulatory_records: list[ProductRegulatoryRecord] = field(default_factory=list)
     evidence_ids: tuple[str, ...] = ()
     version: int = 1
     supersedes: str | None = None
-    limitations: tuple[str, ...] = ()
-    schema_version: str = "1.0"
+    limitations: list[str] = field(default_factory=list)
+    product_schema_version: str = "1.0"
 
     def __post_init__(self) -> None:
         if not self.id.strip() or not self.name.strip() or not self.intended_indication.strip():
             raise ValueError("product id, name and intended_indication are required")
         if self.version < 1:
             raise ValueError("product version must be positive")
-        if self.schema_version != "1.0":
+        if self.product_schema_version != "1.0":
             raise ValueError("unsupported therapeutic product schema version")
         if len(set(self.evidence_ids)) != len(self.evidence_ids):
             raise ValueError("product evidence_ids must be unique")
