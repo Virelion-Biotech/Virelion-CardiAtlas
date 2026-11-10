@@ -32,6 +32,8 @@ def record_from_dict(payload: dict) -> Record:
     cls = _RECORD_CLASSES.get(record_type)
     if cls is None:
         raise ValueError(f"unsupported record_type: {record_type}")
+    if record_type == "therapeutic_product":
+        return require_valid(TherapeuticProductRecord.from_dict(payload))
     field_names = {field.name for field in cls.__dataclass_fields__.values() if field.init}
     unknown = set(payload) - field_names - {"record_type"}
     if unknown:
