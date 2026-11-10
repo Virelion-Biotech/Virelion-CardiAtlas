@@ -16,20 +16,20 @@ def test_product_record_serializes_structured_evidence():
             assay_name="contractile response",
             biological_function="stimulus-linked contraction",
             method="paced force measurement",
-            evidence_ids=("ev-1",),
+            evidence_ids=["ev-1"],
             status="reported",
         ),),
         regulatory_records=(ProductRegulatoryRecord(
             jurisdiction="JP", status="scientific_advice", authority="PMDA",
-            evidence_ids=("ev-2",),
+            evidence_ids=["ev-2"],
         ),),
-        evidence_ids=("ev-1", "ev-2"),
+        evidence_ids=["ev-1", "ev-2"],
         limitations=("Company-reported milestone; not marketing authorization.",),
     )
     payload = record.to_dict()
     assert payload["potency_assays"][0]["biological_function"] == "stimulus-linked contraction"
     assert payload["regulatory_records"][0]["status"] == "scientific_advice"
-    assert payload["schema_version"] == "1.0"
+    assert payload["product_schema_version"] == "1.0"
 
 
 def test_product_rejects_duplicate_evidence_ids():
@@ -51,3 +51,17 @@ def test_product_rejects_nonpositive_version():
             id="p", name="Product", modality="gene_therapy",
             intended_indication="CPVT", version=0,
         )
+
+
+def test_product_is_first_class_registry_record():
+    from cardiatlas.registry import AtlasRegistry
+    from cardiatlas.validation import require_valid
+
+    record = TherapeuticProductRecord(
+        id="product-registry", name="Example product", modality="gene_therapy",
+        intended_indication="CPVT",
+    )
+    require_valid(record)
+    registry = AtlasRegistry()
+    registry.add(record)
+    assert registry.get("product-registry").record_type == "therapeutic_product"
