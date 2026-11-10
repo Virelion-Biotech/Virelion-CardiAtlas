@@ -116,3 +116,20 @@ class TherapeuticProductRecord(AtlasRecord):
         payload["regulatory_records"] = [asdict(x) for x in self.regulatory_records]
         payload["limitations"] = list(self.limitations)
         return payload
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "TherapeuticProductRecord":
+        """Reconstruct nested typed records from a JSON bundle payload."""
+        raw = dict(payload)
+        raw.pop("record_type", None)
+        raw["manufacturing"] = ManufacturingProfile(**raw.get("manufacturing", {}))
+        raw["potency_assays"] = [
+            item if isinstance(item, PotencyAssay) else PotencyAssay(**item)
+            for item in raw.get("potency_assays", [])
+        ]
+        raw["regulatory_records"] = [
+            item if isinstance(item, ProductRegulatoryRecord) else ProductRegulatoryRecord(**item)
+            for item in raw.get("regulatory_records", [])
+        ]
+        allowed = {item.name for item in __import__("dataclasses").fields(cls) if item.init}
+        return cls(**{key: value for key, value in raw.items() if key in allowed})
