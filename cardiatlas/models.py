@@ -135,4 +135,6 @@ class InterventionRecord(AtlasRecord):
     phenotype_ids: list[str] = field(default_factory=list)
     evidence_ids: list[str] = field(default_factory=list)
 
-Record = EvidenceRecord | MarkerRecord | PhenotypeRecord | CellStateRecord | DatasetRecord | StudyRecord | SampleRecord | InterventionRecord
+from .therapeutic_products import TherapeuticProductRecord
+
+Record = EvidenceRecord | MarkerRecord | PhenotypeRecord | CellStateRecord | DatasetRecord | StudyRecord | SampleRecord | InterventionRecord | TherapeuticProductRecord
