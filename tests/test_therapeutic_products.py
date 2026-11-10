@@ -83,3 +83,15 @@ def test_product_round_trips_through_atlas_loader():
     assert isinstance(restored, TherapeuticProductRecord)
     assert restored.manufacturing.autologous_or_allogeneic == "autologous"
     assert restored.potency_assays[0].biological_function == "contractility"
+
+
+def test_product_loader_rejects_unknown_fields():
+    from cardiatlas.loader import record_from_dict
+
+    payload = TherapeuticProductRecord(
+        id="strict-product", name="Example", modality="gene_therapy",
+        intended_indication="CPVT",
+    ).to_dict()
+    payload["unrecognised_field"] = "must not be silently dropped"
+    with pytest.raises(ValueError, match="unknown therapeutic product fields"):
+        record_from_dict(payload)
