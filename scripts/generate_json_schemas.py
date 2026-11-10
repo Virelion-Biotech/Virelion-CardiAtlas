@@ -1,7 +1,7 @@
 """Regenerate schemas/*_record.schema.json from the cardiatlas.models dataclasses.
 
 These JSON Schema files are CardiAtlas's published, language-agnostic
-contract for the 8 record types (docs/integration-contracts.md) -- other
+contract for the 9 record types (docs/integration-contracts.md) -- other
 Virelion-HeartTwin member repos, potentially written in other languages,
 validate against them instead of importing cardiatlas.models directly.
 
