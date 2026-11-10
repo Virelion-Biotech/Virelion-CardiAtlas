@@ -132,4 +132,7 @@ class TherapeuticProductRecord(AtlasRecord):
             for item in raw.get("regulatory_records", [])
         ]
         allowed = {item.name for item in fields(cls) if item.init}
-        return cls(**{key: value for key, value in raw.items() if key in allowed})
+        unknown = set(raw) - allowed
+        if unknown:
+            raise ValueError(f"unknown therapeutic product fields: {sorted(unknown)}")
+        return cls(**raw)
