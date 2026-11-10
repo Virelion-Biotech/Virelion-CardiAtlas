@@ -1,7 +1,7 @@
 """Regenerate schemas/*_record.schema.json from the cardiatlas.models dataclasses.
 
 These JSON Schema files are CardiAtlas's published, language-agnostic
-contract for the 8 record types (docs/integration-contracts.md) -- other
+contract for the 9 record types (docs/integration-contracts.md) -- other
 Virelion-HeartTwin member repos, potentially written in other languages,
 validate against them instead of importing cardiatlas.models directly.
 
@@ -28,6 +28,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from cardiatlas import models  # noqa: E402
+from cardiatlas.therapeutic_products import (  # noqa: E402
+    ManufacturingProfile, PotencyAssay, ProductRegulatoryRecord, TherapeuticProductRecord,
+)
 
 REPO = "https://virelion-biotech.github.io/Virelion-CardiAtlas/schemas"
 
@@ -40,6 +43,7 @@ _MODEL_FOR_STEM = {
     "study_record": models.StudyRecord,
     "sample_record": models.SampleRecord,
     "intervention_record": models.InterventionRecord,
+    "therapeutic_product_record": TherapeuticProductRecord,
 }
 
 _TITLE_FOR_STEM = {
@@ -51,6 +55,7 @@ _TITLE_FOR_STEM = {
     "study_record": "CardiAtlas Study Record",
     "sample_record": "CardiAtlas Sample Record",
     "intervention_record": "CardiAtlas Intervention Record",
+    "therapeutic_product_record": "CardiAtlas Therapeutic Product Evidence Record",
 }
 
 
@@ -131,11 +136,78 @@ def schema_for(stem: str) -> dict[str, typing.Any]:
     }
 
 
+
+def _dataclass_required_fields(cls: type) -> set[str]:
+    return {
+        item.name for item in dataclasses.fields(cls)
+        if item.init and item.default is dataclasses.MISSING
+        and item.default_factory is dataclasses.MISSING
+    }
+
+
+def validate_therapeutic_product_schema(schema: dict[str, typing.Any]) -> list[str]:
+    """Check the detailed public product schema against every Python dataclass field.
+
+    The product schema retains hand-authored descriptions and stricter constraints;
+    this check prevents top-level or nested dataclass fields and Literal enums drifting.
+    """
+    errors: list[str] = []
+    if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+        errors.append("wrong JSON Schema dialect")
+    if schema.get("$id") != f"{REPO}/therapeutic_product.schema.json":
+        errors.append("wrong $id")
+    expected = {
+        "therapeutic_product_record": TherapeuticProductRecord,
+    }
+    for stem, cls in expected.items():
+        props = schema.get("properties", {})
+        model_names = {f.name for f in dataclasses.fields(cls)}
+        if set(props) != model_names:
+            errors.append(f"{stem}: top-level properties differ from model fields")
+        if not _dataclass_required_fields(cls) <= set(schema.get("required", [])):
+            errors.append(f"{stem}: schema omits dataclass-required fields")
+    nested = {
+        "manufacturing": ManufacturingProfile,
+        "potency_assays.items": PotencyAssay,
+        "regulatory_records.items": ProductRegulatoryRecord,
+    }
+    for path, cls in nested.items():
+        node: typing.Any = schema.get("properties", {})
+        for part in path.split("."):
+            node = node.get(part, {}) if isinstance(node, dict) else {}
+            if part == "items" and isinstance(node, dict):
+                continue
+        props = node.get("properties", {}) if isinstance(node, dict) else {}
+        model_names = {f.name for f in dataclasses.fields(cls)}
+        if set(props) != model_names:
+            errors.append(f"{path}: properties differ from {cls.__name__} fields")
+        if not _dataclass_required_fields(cls) <= set(node.get("required", [])):
+            errors.append(f"{path}: schema omits dataclass-required fields")
+    literal_fields = {
+        "modality": typing.get_type_hints(TherapeuticProductRecord)["modality"],
+        "manufacturing.autologous_or_allogeneic": typing.get_type_hints(ManufacturingProfile)["autologous_or_allogeneic"],
+        "potency_assays.items.status": typing.get_type_hints(PotencyAssay)["status"],
+        "regulatory_records.items.status": typing.get_type_hints(ProductRegulatoryRecord)["status"],
+    }
+    for path, annotation in literal_fields.items():
+        node: typing.Any = schema.get("properties", {})
+        for part in path.split("."):
+            node = node.get(part, {}) if isinstance(node, dict) else {}
+            if part == "items" and isinstance(node, dict):
+                continue
+        expected_values = list(typing.get_args(annotation))
+        if not isinstance(node, dict) or node.get("enum") != expected_values:
+            errors.append(f"{path}: enum differs from Python Literal values")
+    return errors
+
+
 def main(argv: list[str]) -> int:
     check_only = "--check" in argv
     root = Path(__file__).resolve().parents[1] / "schemas"
     changed: list[str] = []
     for stem in sorted(_MODEL_FOR_STEM):
+        if stem == "therapeutic_product_record":
+            continue  # Rich hand-authored schema is structurally checked below.
         target = root / f"{stem}.schema.json"
         rendered = json.dumps(schema_for(stem), indent=2, sort_keys=False) + "\n"
         if target.exists() and target.read_text(encoding="utf-8") == rendered:
@@ -143,6 +215,14 @@ def main(argv: list[str]) -> int:
         changed.append(str(target))
         if not check_only:
             target.write_text(rendered, encoding="utf-8")
+    product_schema_path = root / "therapeutic_product.schema.json"
+    if product_schema_path.exists():
+        product_schema = json.loads(product_schema_path.read_text(encoding="utf-8"))
+        errors = validate_therapeutic_product_schema(product_schema)
+        if errors:
+            changed.extend(f"{product_schema_path}: {error}" for error in errors)
+    else:
+        changed.append(str(product_schema_path))
     if check_only and changed:
         print("out of sync with cardiatlas.models:")
         for path in changed:
