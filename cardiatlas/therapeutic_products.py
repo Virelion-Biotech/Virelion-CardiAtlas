@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
+from .models import AtlasRecord
+
 ProductModality = Literal[
     "autologous_cell", "allogeneic_cell", "engineered_tissue", "gene_therapy",
     "gene_editing", "cell_gene_combination", "secretome", "other",
@@ -64,7 +66,7 @@ class ProductRegulatoryRecord:
     procedure_or_trial_id: str | None = None
     as_of_date: str | None = None
     scope_note: str = ""
-    evidence_ids: tuple[str, ...] = ()
+    evidence_ids: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.jurisdiction.strip():
