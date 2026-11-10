@@ -6,7 +6,7 @@ decision, regulatory determination, or proof of clinical efficacy.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Literal
 
 from .models import AtlasRecord
@@ -131,5 +131,5 @@ class TherapeuticProductRecord(AtlasRecord):
             item if isinstance(item, ProductRegulatoryRecord) else ProductRegulatoryRecord(**item)
             for item in raw.get("regulatory_records", [])
         ]
-        allowed = {item.name for item in __import__("dataclasses").fields(cls) if item.init}
+        allowed = {item.name for item in fields(cls) if item.init}
         return cls(**{key: value for key, value in raw.items() if key in allowed})
