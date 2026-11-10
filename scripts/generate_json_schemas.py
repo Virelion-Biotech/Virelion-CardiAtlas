@@ -190,11 +190,16 @@ def validate_therapeutic_product_schema(schema: dict[str, typing.Any]) -> list[s
         "regulatory_records.items.status": typing.get_type_hints(ProductRegulatoryRecord)["status"],
     }
     for path, annotation in literal_fields.items():
-        node: typing.Any = schema.get("properties", {})
+        node: typing.Any = schema
         for part in path.split("."):
-            node = node.get(part, {}) if isinstance(node, dict) else {}
-            if part == "items" and isinstance(node, dict):
-                continue
+            if not isinstance(node, dict):
+                node = {}
+                break
+            if part == "items":
+                node = node.get("items", {})
+            else:
+                properties = node.get("properties", {})
+                node = properties.get(part, {}) if isinstance(properties, dict) else {}
         expected_values = list(typing.get_args(annotation))
         if not isinstance(node, dict) or node.get("enum") != expected_values:
             errors.append(f"{path}: enum differs from Python Literal values")

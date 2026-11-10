@@ -39,3 +39,26 @@ def test_generated_schema_covers_every_model_field():
         model_field_names = {f.name for f in __import__("dataclasses").fields(cls)}
         assert set(schema["properties"]) == model_field_names, stem
         assert {"id", "record_type", "name"} <= set(schema["required"]), stem
+
+def test_therapeutic_product_schema_detects_nested_literal_enum_drift():
+    """Nested Literal checks must descend through JSON Schema properties and array items."""
+    import copy
+
+    original = json.loads((ROOT / "schemas" / "therapeutic_product.schema.json").read_text(encoding="utf-8"))
+    cases = {
+        "manufacturing.autologous_or_allogeneic": ["autologous", "unknown"],
+        "potency_assays.items.status": ["not_reported", "expert_reviewed"],
+        "regulatory_records.items.status": ["preclinical", "unknown"],
+    }
+    for path, wrong_values in cases.items():
+        schema = copy.deepcopy(original)
+        node = schema
+        for part in path.split("."):
+            if part == "items":
+                node = node["items"]
+            else:
+                node = node["properties"][part]
+        node["enum"] = wrong_values
+        errors = generate_json_schemas.validate_therapeutic_product_schema(schema)
+        assert f"{path}: enum differs from Python Literal values" in errors
+
