@@ -91,7 +91,7 @@ class TherapeuticProductRecord(AtlasRecord):
     release_criteria: dict[str, Any] = field(default_factory=dict)
     stability: dict[str, Any] = field(default_factory=dict)
     regulatory_records: list[ProductRegulatoryRecord] = field(default_factory=list)
-    evidence_ids: tuple[str, ...] = ()
+    evidence_ids: list[str] = field(default_factory=list)
     version: int = 1
     supersedes: str | None = None
     limitations: list[str] = field(default_factory=list)
