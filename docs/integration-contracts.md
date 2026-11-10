@@ -31,3 +31,8 @@ A downstream repository may cache Atlas records, but should retain:
 - Atlas contract version when using an `AtlasContext`;
 - source/evidence IDs;
 - Atlas release digest when reproducibility matters.
+
+
+## Therapeutic product evidence contract
+
+The `therapeutic_product` record is a first-class Atlas record with a dedicated schema at `schemas/therapeutic_product.schema.json`. The schema synchronization check validates every top-level and nested dataclass field plus the controlled Literal enums for manufacturing, potency and regulatory records. Structured clinical trial facts may be attached to an evidence record under `context.clinical_trial_evidence`; CardiEval consumes only that explicit object and retains the source evidence ID.
