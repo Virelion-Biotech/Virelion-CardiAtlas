@@ -58,7 +58,7 @@ jobs:
           print(f"validated live GEO reconstruction: {len(rows)} samples, {acquisition['payload_bytes']} bytes")
           PY
       - name: Upload reconstruction artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: geo-gse153480-reconstruction
           path: |
