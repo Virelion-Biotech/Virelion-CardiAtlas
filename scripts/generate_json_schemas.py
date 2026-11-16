@@ -1,7 +1,7 @@
 """Regenerate schemas/*_record.schema.json from the cardiatlas.models dataclasses.
 
 These JSON Schema files are CardiAtlas's published, language-agnostic
-contract for the 9 record types (docs/integration-contracts.md) -- other
+contract for the 10 record types (docs/integration-contracts.md) -- other
 Virelion-HeartTwin member repos, potentially written in other languages,
 validate against them instead of importing cardiatlas.models directly.
 
@@ -44,6 +44,7 @@ _MODEL_FOR_STEM = {
     "sample_record": models.SampleRecord,
     "intervention_record": models.InterventionRecord,
     "therapeutic_product_record": TherapeuticProductRecord,
+    "therapeutic_evidence_record": models.TherapeuticEvidenceRecord,
 }
 
 _TITLE_FOR_STEM = {
@@ -56,6 +57,7 @@ _TITLE_FOR_STEM = {
     "sample_record": "CardiAtlas Sample Record",
     "intervention_record": "CardiAtlas Intervention Record",
     "therapeutic_product_record": "CardiAtlas Therapeutic Product Evidence Record",
+    "therapeutic_evidence_record": "CardiAtlas Therapeutic Intervention Evidence Record",
 }
 
 
