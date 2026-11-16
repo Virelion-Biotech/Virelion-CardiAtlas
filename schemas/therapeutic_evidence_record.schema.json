@@ -12,7 +12,7 @@
     "source_ids": {"type": "array", "items": {"type": "string"}},
     "tags": {"type": "array", "items": {"type": "string"}},
     "metadata": {"type": "object"},
-    "schema_version": {"const": "0.3"},
+    "schema_version": {"type": "string"},
     "evidence_class": {"enum": ["myocardial_regeneration", "myocardial_repair", "myocardial_preservation", "genetic_disease_modification", "vascular_tissue_engineering", "immune_modulation", "other"]},
     "modality": {"enum": ["circRNA", "modRNA", "siRNA", "ASO", "AAV", "gene_editing", "cell_therapy", "engineered_tissue", "hydrogel", "small_molecule", "biologic", "immune_intervention", "other"]},
     "product_id": {"type": ["string", "null"]},
@@ -37,5 +37,4 @@
     "source_locator": {"type": "object"},
     "curation_status": {"enum": ["unreviewed", "source_checked", "expert_reviewed"]}
   },
-  "additionalProperties": false
 }
