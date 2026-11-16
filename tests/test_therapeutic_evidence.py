@@ -56,6 +56,9 @@ def test_regeneration_class_is_separate_from_modality():
 def test_surrogate_endpoint_cannot_be_mislabeled_as_regeneration():
     with pytest.raises(ValueError, match="surrogate endpoint"):
         example(endpoints=[{"endpoint":"LVEF","interpretation":"proof of regeneration"}])
+    # Explicitly cautious language mentioning regeneration must remain admissible.
+    cautious = example(endpoints=[{"endpoint":"LVEF","interpretation":"does not prove regeneration"}])
+    assert cautious.endpoints[0]["interpretation"] == "does not prove regeneration"
 
 
 def test_evidence_ids_must_be_unique():
