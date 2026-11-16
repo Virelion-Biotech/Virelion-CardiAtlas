@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Iterable
 
 from .migrate import migrate_payload
-from .models import CellStateRecord, DatasetRecord, EvidenceRecord, InterventionRecord, MarkerRecord, PhenotypeRecord, SampleRecord, StudyRecord, Record
+from .models import CellStateRecord, DatasetRecord, EvidenceRecord, InterventionRecord, MarkerRecord, PhenotypeRecord, SampleRecord, StudyRecord, TherapeuticEvidenceRecord, Record
 from .registry import AtlasRegistry
 from .therapeutic_products import TherapeuticProductRecord
 from .validation import require_valid
@@ -21,6 +21,7 @@ _RECORD_CLASSES = {
     "sample": SampleRecord,
     "intervention": InterventionRecord,
     "therapeutic_product": TherapeuticProductRecord,
+    "therapeutic_evidence": TherapeuticEvidenceRecord,
 }
 
 
