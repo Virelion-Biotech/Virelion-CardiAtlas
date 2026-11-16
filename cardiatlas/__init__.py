@@ -25,7 +25,7 @@ from .identifiers import IdentifierResolution, resolve as resolve_identifier
 from .integrations import BenchmarkCandidate, benchmark_readiness, dataset_to_benchmark_candidate
 from .loader import load_into_registry, read_bundle, record_from_dict
 from .migrate import migrate_payload, migrate_records
-from .models import AtlasRecord, CellStateRecord, DatasetRecord, EvidenceRecord, InterventionRecord, MarkerRecord, PhenotypeRecord, SampleRecord, StudyRecord
+from .models import AtlasRecord, CellStateRecord, DatasetRecord, EvidenceRecord, InterventionRecord, MarkerRecord, PhenotypeRecord, SampleRecord, StudyRecord, TherapeuticEvidenceRecord
 from .normalize import canonical_key, normalize_accession, normalize_gene_symbol, normalize_label, normalize_species
 from .ontology import Concept, canonical_concept_id, concepts_by_category, descendants, resolve_concept
 from .promotion import PromotionDecision, decide_promotion, promote_records
