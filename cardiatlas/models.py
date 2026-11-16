@@ -177,8 +177,6 @@ class TherapeuticEvidenceRecord(AtlasRecord):
     curation_status: Literal["unreviewed", "source_checked", "expert_reviewed"] = "unreviewed"
 
     def __post_init__(self) -> None:
-        if self.version if hasattr(self, "version") else False:
-            pass
         if len(set(self.evidence_ids)) != len(self.evidence_ids):
             raise ValueError("therapeutic evidence_ids must be unique")
         if any(not isinstance(item, dict) for item in self.endpoints):
