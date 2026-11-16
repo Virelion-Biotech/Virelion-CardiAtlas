@@ -181,11 +181,13 @@ class TherapeuticEvidenceRecord(AtlasRecord):
             raise ValueError("therapeutic evidence_ids must be unique")
         if any(not isinstance(item, dict) for item in self.endpoints):
             raise ValueError("endpoints must be structured objects")
-        forbidden = {"regeneration", "regenerative"}
+        forbidden_phrases = ("proof of regeneration", "demonstrates regeneration", "regeneration demonstrated", "proves regeneration", "regenerative efficacy")
         for endpoint in self.endpoints:
             label = str(endpoint.get("endpoint", "")).strip().lower()
             interpretation = str(endpoint.get("interpretation", "")).strip().lower()
-            if label in {"lvef", "ejection fraction", "ki67", "scar size", "fibrosis"} and forbidden.intersection(set(interpretation.split())):
+            negative_context = any(phrase in interpretation for phrase in ("not proof", "does not prove", "not evidence", "insufficient to establish", "cannot establish"))
+            positive_claim = any(phrase in interpretation for phrase in forbidden_phrases)
+            if label in {"lvef", "ejection fraction", "ki67", "scar size", "fibrosis"} and positive_claim and not negative_context:
                 raise ValueError("surrogate endpoint cannot alone be labelled as proof of regeneration")
 
 if TYPE_CHECKING:
