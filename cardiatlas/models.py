@@ -135,7 +135,62 @@ class InterventionRecord(AtlasRecord):
     phenotype_ids: list[str] = field(default_factory=list)
     evidence_ids: list[str] = field(default_factory=list)
 
+@dataclass(slots=True)
+class TherapeuticEvidenceRecord(AtlasRecord):
+    """Study-level evidence about a cardiac therapeutic intervention.
+
+    This record classifies the intended biological effect separately from the
+    intervention's delivery modality. It stores observations and provenance;
+    it does not assert efficacy or clinical readiness.
+    """
+    record_type: str = field(default="therapeutic_evidence", init=False)
+    evidence_class: Literal[
+        "myocardial_regeneration", "myocardial_repair", "myocardial_preservation",
+        "genetic_disease_modification", "vascular_tissue_engineering",
+        "immune_modulation", "other"
+    ] = "other"
+    modality: Literal[
+        "circRNA", "modRNA", "siRNA", "ASO", "AAV", "gene_editing",
+        "cell_therapy", "engineered_tissue", "hydrogel", "small_molecule",
+        "biologic", "immune_intervention", "other"
+    ] = "other"
+    product_id: str | None = None
+    target_or_genotype: str | None = None
+    payload_or_construct: str | None = None
+    delivery_method: str | None = None
+    proposed_mechanism: str = ""
+    model_system: str = ""
+    species: str | None = None
+    dose: str | None = None
+    schedule: str | None = None
+    comparator: str | None = None
+    endpoints: list[dict[str, Any]] = field(default_factory=list)
+    analysis_population: str | None = None
+    denominator: str | None = None
+    follow_up: str | None = None
+    subgroup_analysis: str | None = None
+    multiplicity_handling: str | None = None
+    safety_findings: list[str] = field(default_factory=list)
+    limitations: list[str] = field(default_factory=list)
+    evidence_ids: list[str] = field(default_factory=list)
+    source_locator: dict[str, Any] = field(default_factory=dict)
+    curation_status: Literal["unreviewed", "source_checked", "expert_reviewed"] = "unreviewed"
+
+    def __post_init__(self) -> None:
+        if len(set(self.evidence_ids)) != len(self.evidence_ids):
+            raise ValueError("therapeutic evidence_ids must be unique")
+        if any(not isinstance(item, dict) for item in self.endpoints):
+            raise ValueError("endpoints must be structured objects")
+        forbidden_phrases = ("proof of regeneration", "demonstrates regeneration", "regeneration demonstrated", "proves regeneration", "regenerative efficacy")
+        for endpoint in self.endpoints:
+            label = str(endpoint.get("endpoint", "")).strip().lower()
+            interpretation = str(endpoint.get("interpretation", "")).strip().lower()
+            negative_context = any(phrase in interpretation for phrase in ("not proof", "does not prove", "not evidence", "insufficient to establish", "cannot establish"))
+            positive_claim = any(phrase in interpretation for phrase in forbidden_phrases)
+            if label in {"lvef", "ejection fraction", "ki67", "scar size", "fibrosis"} and positive_claim and not negative_context:
+                raise ValueError("surrogate endpoint cannot alone be labelled as proof of regeneration")
+
 if TYPE_CHECKING:
     from .therapeutic_products import TherapeuticProductRecord
 
-Record = Union[EvidenceRecord, MarkerRecord, PhenotypeRecord, CellStateRecord, DatasetRecord, StudyRecord, SampleRecord, InterventionRecord, "TherapeuticProductRecord"]
+Record = Union[EvidenceRecord, MarkerRecord, PhenotypeRecord, CellStateRecord, DatasetRecord, StudyRecord, SampleRecord, InterventionRecord, TherapeuticEvidenceRecord, "TherapeuticProductRecord"]

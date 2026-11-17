@@ -25,7 +25,7 @@ from .identifiers import IdentifierResolution, resolve as resolve_identifier
 from .integrations import BenchmarkCandidate, benchmark_readiness, dataset_to_benchmark_candidate
 from .loader import load_into_registry, read_bundle, record_from_dict
 from .migrate import migrate_payload, migrate_records
-from .models import AtlasRecord, CellStateRecord, DatasetRecord, EvidenceRecord, InterventionRecord, MarkerRecord, PhenotypeRecord, SampleRecord, StudyRecord
+from .models import AtlasRecord, CellStateRecord, DatasetRecord, EvidenceRecord, InterventionRecord, MarkerRecord, PhenotypeRecord, SampleRecord, StudyRecord, TherapeuticEvidenceRecord
 from .normalize import canonical_key, normalize_accession, normalize_gene_symbol, normalize_label, normalize_species
 from .ontology import Concept, canonical_concept_id, concepts_by_category, descendants, resolve_concept
 from .promotion import PromotionDecision, decide_promotion, promote_records
@@ -52,7 +52,7 @@ __all__ = [
     "CorpusReport", "DatasetRecord", "DEFAULT_PORT", "EvidenceRecord", "EvidenceScore", "GeoReconstructionBundle", "GeoSoftSample", "HarvestBatch", "HarvestItem", "HarvestManifest", "HarvestQC", "HarmonizedValue", "IdentifierResolution",
     "InterventionRecord", "MarkerRecord", "PhenotypeRecord", "PromotionDecision", "ProvenanceBundle", "ProvenanceEvent", "Query", "QueryHit",
     "QualityReport", "ReconstructionDecision", "ReconstructionReport", "ReferenceBuild", "Relation", "RELEASE_STATES", "ReleaseCheck", "ReleaseManifest", "ReleaseReadiness", "ReleaseRecord", "RetrievalResult",
-    "SampleRecord", "SnapshotDiff", "ManufacturingProfile", "PotencyAssay", "ProductRegulatoryRecord", "TherapeuticProductRecord", "SourceResult", "SQLiteAtlasStore", "StateTransition", "StudyBenchmarkReadiness", "StudyQC", "StudyRecord", "acquisition_plan",
+    "SampleRecord", "SnapshotDiff", "ManufacturingProfile", "PotencyAssay", "ProductRegulatoryRecord", "TherapeuticProductRecord", "TherapeuticEvidenceRecord", "SourceResult", "SQLiteAtlasStore", "StateTransition", "StudyBenchmarkReadiness", "StudyQC", "StudyRecord", "acquisition_plan",
     "assess_dataset", "assess_harvest", "assess_release", "assess_study", "assess_study_benchmark_readiness", "attach_datasets", "audit_datasets", "benchmark_readiness", "build_reference", "build_server",
     "canonical_concept_id", "canonical_digest", "canonical_key", "concepts_by_category", "context_from_dict", "corpus_report", "create_draft", "create_harvest_manifest", "create_manifest",
     "dataset_to_benchmark_candidate", "decide_promotion", "deduplicate_harvest", "deprecate", "descendants", "diff_records", "digest_records", "graph_context", "group_datasets",
